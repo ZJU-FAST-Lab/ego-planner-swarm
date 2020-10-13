@@ -1,0 +1,25 @@
+<launch>
+  <arg name="my_id" value="0"/>
+  <arg name="odom_topic" value="visual_slam/odom"/>
+
+  <!-- Launch ROS Package Template Node -->
+  <node pkg="drone_detect" type="drone_detect" name="test_drone_detect" output="screen">
+    <rosparam command="load" file="$(find local_sensing_node)/params/camera.yaml" />
+    <rosparam command="load" file="$(find drone_detect)/config/default.yaml"/>
+    <param name="my_id"      value="$(arg my_id)" />
+
+    <remap from="~odometry"   to="/drone_$(arg my_id)_$(arg odom_topic)"/>
+    <remap from="~depth" to="/drone_$(arg my_id)_pcl_render_node/depth"/>
+    <remap from="~colordepth" to="/drone_$(arg my_id)_pcl_render_node/colordepth"/>
+    <remap from="~camera_pose" to="/drone_$(arg my_id)_pcl_render_node/camera_pose"/>
+
+    <remap from="~drone0" to="/drone_0_$(arg odom_topic)"/>
+    <remap from="~drone1" to="/drone_1_$(arg odom_topic)"/>
+    <remap from="~drone2" to="/drone_2_$(arg odom_topic)"/>
+
+    <!-- <remap from="~drone1" to="/test/dynamic0_odom"/> -->
+    <!-- <remap from="~drone2" to="/test/dynamic1_odom"/> -->
+
+  </node>
+
+</launch>
