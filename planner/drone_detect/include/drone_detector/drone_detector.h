@@ -63,6 +63,9 @@ class DroneDetector
   void rcvDepthColorCamPoseCallback(const sensor_msgs::ImageConstPtr& depth_img, \
                                 const sensor_msgs::ImageConstPtr& color_img, \
                                 const geometry_msgs::PoseStampedConstPtr& camera_pose);
+  
+  void rcvDepthCamPoseCallback(const sensor_msgs::ImageConstPtr& depth_img, \
+                                const geometry_msgs::PoseStampedConstPtr& camera_pose);
 
   void rcvDroneOdomCallbackBase(const nav_msgs::Odometry& odom, const int drone_id);
 
@@ -77,10 +80,14 @@ class DroneDetector
   // depth, colordepth, camera_pos subscriber
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, geometry_msgs::PoseStamped> SyncPolicyDepthColorImagePose;
   typedef std::shared_ptr<message_filters::Synchronizer<SyncPolicyDepthColorImagePose>> SynchronizerDepthColorImagePose;
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, geometry_msgs::PoseStamped> SyncPolicyDepthImagePose;
+  typedef std::shared_ptr<message_filters::Synchronizer<SyncPolicyDepthImagePose>> SynchronizerDepthImagePose;
+
   std::shared_ptr<message_filters::Subscriber<sensor_msgs::Image>> depth_img_sub_;
   std::shared_ptr<message_filters::Subscriber<sensor_msgs::Image>> colordepth_img_sub_;
   std::shared_ptr<message_filters::Subscriber<geometry_msgs::PoseStamped>> camera_pos_sub_;
   SynchronizerDepthColorImagePose sync_depth_color_img_pose_;
+  SynchronizerDepthImagePose sync_depth_img_pose_;
   
   // other drones subscriber
   ros::Subscriber drone0_odom_sub_, drone1_odom_sub_, drone2_odom_sub_;

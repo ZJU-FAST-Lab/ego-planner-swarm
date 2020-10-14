@@ -136,7 +136,7 @@
       <rosparam command="load" file="$(find local_sensing_node)/params/camera.yaml" />
       <rosparam command="load" file="$(find drone_detect)/config/default.yaml"/>
       <param name="my_id"      value="$(arg drone_id)" />
-
+      <param name="debug_flag" value="false"/>
       <remap from="~odometry"   to="/drone_$(arg drone_id)_$(arg odom_topic)"/>
       <remap from="~depth" to="/drone_$(arg drone_id)_pcl_render_node/depth"/>
       <remap from="~colordepth" to="/drone_$(arg drone_id)_pcl_render_node/colordepth"/>

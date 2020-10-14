@@ -11,21 +11,30 @@ DroneDetector::DroneDetector(ros::NodeHandle& nodeHandle)
   readParameters();
 
   depth_img_sub_.reset(new message_filters::Subscriber<sensor_msgs::Image>(nh_, "depth", 50));
-  colordepth_img_sub_.reset(new message_filters::Subscriber<sensor_msgs::Image>(nh_, "colordepth", 50));
   camera_pos_sub_.reset(new message_filters::Subscriber<geometry_msgs::PoseStamped>(nh_, "camera_pose", 50));
 
-  sync_depth_color_img_pose_.reset(new message_filters::Synchronizer<SyncPolicyDepthColorImagePose>( \
+  if (debug_flag_) {
+    colordepth_img_sub_.reset(new message_filters::Subscriber<sensor_msgs::Image>(nh_, "colordepth", 50));
+    sync_depth_color_img_pose_.reset(new message_filters::Synchronizer<SyncPolicyDepthColorImagePose>( \
                               SyncPolicyDepthColorImagePose(50), \
                               *depth_img_sub_, *colordepth_img_sub_, *camera_pos_sub_));
 
-  sync_depth_color_img_pose_->registerCallback(boost::bind(&DroneDetector::rcvDepthColorCamPoseCallback, this, _1, _2, _3));
+    sync_depth_color_img_pose_->registerCallback(boost::bind(&DroneDetector::rcvDepthColorCamPoseCallback, this, _1, _2, _3));
+    new_colordepth_img_pub_ = nh_.advertise<sensor_msgs::Image>("new_colordepth_image", 50);
+
+  } else {
+    sync_depth_img_pose_.reset(new message_filters::Synchronizer<SyncPolicyDepthImagePose>( \
+                              SyncPolicyDepthImagePose(50), \
+                              *depth_img_sub_, *camera_pos_sub_));
+    sync_depth_img_pose_->registerCallback(boost::bind(&DroneDetector::rcvDepthCamPoseCallback, this, _1, _2));
+  }
+
 
   drone0_odom_sub_ = nh_.subscribe("drone0", 50, &DroneDetector::rcvDrone0OdomCallback, this); 
   drone1_odom_sub_ = nh_.subscribe("drone1", 50, &DroneDetector::rcvDrone1OdomCallback, this); 
   drone2_odom_sub_ = nh_.subscribe("drone2", 50, &DroneDetector::rcvDrone2OdomCallback, this); 
 
   new_depth_img_pub_ = nh_.advertise<sensor_msgs::Image>("new_depth_image", 50);
-  new_colordepth_img_pub_ = nh_.advertise<sensor_msgs::Image>("new_colordepth_image", 50);
 
   debug_info_pub_ = nh_.advertise<std_msgs::String>("/debug_info", 50);
 
@@ -187,6 +196,51 @@ void DroneDetector::rcvDepthColorCamPoseCallback(const sensor_msgs::ImageConstPt
     out_msg.image = color_img_.clone();
     new_colordepth_img_pub_.publish(out_msg.toImageMsg()); 
   }
+
+  for (int i = 0; i < max_drone_num_; i++) {
+    if (in_depth_[i]) {
+      // erase hit pixels in depth
+      for(int k = 0; k < int(hit_pixels_[i].size()); k++) {
+        depth_img_.at<float>(hit_pixels_[i][k](1), hit_pixels_[i][k](0)) = 0;
+      } 
+    }
+  }  
+  debug_end_time_ = ros::Time::now();
+  // ROS_WARN("cost_total_time = %lf", (debug_end_time_ - debug_start_time_).toSec()*1000.0);
+  out_msg.header = depth_img->header;
+  out_msg.encoding = depth_img->encoding;
+  out_msg.image = depth_img_.clone();
+  new_depth_img_pub_.publish(out_msg.toImageMsg());
+}
+
+void DroneDetector::rcvDepthCamPoseCallback(const sensor_msgs::ImageConstPtr& depth_img, \
+                                             const geometry_msgs::PoseStampedConstPtr& camera_pose)
+{
+  my_last_camera_stamp_ = camera_pose->header.stamp;
+  cam2world_(0,3) = camera_pose->pose.position.x;
+  cam2world_(1,3) = camera_pose->pose.position.y;
+  cam2world_(2,3) = camera_pose->pose.position.z;
+  cam2world_(3,3) = 1.0;
+  cam2world_quat_.w() = camera_pose->pose.orientation.w; 
+  cam2world_quat_.x() = camera_pose->pose.orientation.x;
+  cam2world_quat_.y() = camera_pose->pose.orientation.y;
+  cam2world_quat_.z() = camera_pose->pose.orientation.z;
+  cam2world_.block<3,3>(0,0) = cam2world_quat_.toRotationMatrix();  
+  /* get depth image */
+  cv_bridge::CvImagePtr cv_ptr;
+  cv_ptr = cv_bridge::toCvCopy(depth_img, depth_img->encoding);
+  cv_ptr->image.copyTo(depth_img_);
+
+  debug_start_time_ = ros::Time::now();
+
+  Eigen::Vector2i true_pixel[max_drone_num_];
+  for (int i = 0; i < max_drone_num_; i++) {
+    if (in_depth_[i]) {
+      detect(i, true_pixel[i]);
+    }
+  }   
+
+  cv_bridge::CvImage out_msg;
 
   for (int i = 0; i < max_drone_num_; i++) {
     if (in_depth_[i]) {
