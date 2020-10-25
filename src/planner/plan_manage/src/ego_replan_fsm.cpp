@@ -207,6 +207,17 @@ namespace ego_planner
       }
     }
 
+    /* Test distance to the agent */
+    Eigen::Vector3d cp0(msg->pos_pts[0].x, msg->pos_pts[0].y, msg->pos_pts[0].z);
+    Eigen::Vector3d cp1(msg->pos_pts[1].x, msg->pos_pts[1].y, msg->pos_pts[1].z);
+    Eigen::Vector3d cp2(msg->pos_pts[2].x, msg->pos_pts[2].y, msg->pos_pts[2].z);
+    Eigen::Vector3d swarm_start_pt = (cp0+4*cp1+cp2) / 6;
+    if ( (swarm_start_pt - odom_pos_).norm() > planning_horizen_*4.0f/3.0f )
+    {
+      planner_manager_->swarm_trajs_buf_[id].drone_id = -1;
+      return; // if the current drone is too far to the received agent.
+    }
+
     /* Store data */
     Eigen::MatrixXd pos_pts(3, msg->pos_pts.size());
     Eigen::VectorXd knots(msg->knots.size());
@@ -251,62 +262,84 @@ namespace ego_planner
 
   void EGOReplanFSM::swarmTrajsCallback(const traj_utils::MultiBsplinesPtr &msg)
   {
+    
     multi_bspline_msgs_buf_.traj.clear();
     multi_bspline_msgs_buf_ = *msg;
 
     // cout << "\033[45;33mmulti_bspline_msgs_buf.drone_id_from=" << multi_bspline_msgs_buf_.drone_id_from << " multi_bspline_msgs_buf_.traj.size()=" << multi_bspline_msgs_buf_.traj.size() << "\033[0m" << endl;
 
-    if ((int)msg->traj.size() == msg->drone_id_from + 1) // drone_id must start from 0
+    if ( !have_odom_ )
     {
-      have_recv_pre_agent_ = true;
-
-      // Step 1. receive the trajectories
-      planner_manager_->swarm_trajs_buf_.clear();
-      planner_manager_->swarm_trajs_buf_.resize(msg->traj.size());
-
-      for (size_t i = 0; i < msg->traj.size(); i++)
-      {
-        Eigen::MatrixXd pos_pts(3, msg->traj[i].pos_pts.size());
-        Eigen::VectorXd knots(msg->traj[i].knots.size());
-        for (size_t j = 0; j < msg->traj[i].knots.size(); ++j)
-        {
-          knots(j) = msg->traj[i].knots[j];
-        }
-        for (size_t j = 0; j < msg->traj[i].pos_pts.size(); ++j)
-        {
-          pos_pts(0, j) = msg->traj[i].pos_pts[j].x;
-          pos_pts(1, j) = msg->traj[i].pos_pts[j].y;
-          pos_pts(2, j) = msg->traj[i].pos_pts[j].z;
-        }
-
-        planner_manager_->swarm_trajs_buf_[i].drone_id = i;
-
-        if (msg->traj[i].order % 2)
-        {
-          double cutback = (double)msg->traj[i].order / 2 + 1.5;
-          planner_manager_->swarm_trajs_buf_[i].duration_ = msg->traj[i].knots[msg->traj[i].knots.size() - ceil(cutback)];
-        }
-        else
-        {
-          double cutback = (double)msg->traj[i].order / 2 + 1.5;
-          planner_manager_->swarm_trajs_buf_[i].duration_ = (msg->traj[i].knots[msg->traj[i].knots.size() - floor(cutback)] + msg->traj[i].knots[msg->traj[i].knots.size() - ceil(cutback)]) / 2;
-        }
-
-        // planner_manager_->swarm_trajs_buf_[i].position_traj_ =
-        UniformBspline pos_traj(pos_pts, msg->traj[i].order, msg->traj[i].knots[1] - msg->traj[i].knots[0]);
-        pos_traj.setKnot(knots);
-        planner_manager_->swarm_trajs_buf_[i].position_traj_ = pos_traj;
-
-        planner_manager_->swarm_trajs_buf_[i].start_pos_ = planner_manager_->swarm_trajs_buf_[i].position_traj_.evaluateDeBoorT(0);
-
-        planner_manager_->swarm_trajs_buf_[i].start_time_ = msg->traj[i].start_time;
-      }
+      ROS_ERROR("swarmTrajsCallback(): no odom!, return.");
+      return;
     }
-    else
+
+    if ((int)msg->traj.size() != msg->drone_id_from + 1) // drone_id must start from 0
     {
       ROS_ERROR("Wrong trajectory size! msg->traj.size()=%d, msg->drone_id_from+1=%d", msg->traj.size(), msg->drone_id_from + 1);
-      // todo
+      return;
     }
+
+    if (msg->traj[0].order != 3) // only support B-spline order equals 3.
+    {
+      ROS_ERROR("Only support B-spline order equals 3.");
+      return;
+    }
+
+    // Step 1. receive the trajectories
+    planner_manager_->swarm_trajs_buf_.clear();
+    planner_manager_->swarm_trajs_buf_.resize(msg->traj.size());
+
+    for (size_t i = 0; i < msg->traj.size(); i++)
+    {
+
+      Eigen::Vector3d cp0(msg->traj[i].pos_pts[0].x, msg->traj[i].pos_pts[0].y, msg->traj[i].pos_pts[0].z);
+      Eigen::Vector3d cp1(msg->traj[i].pos_pts[1].x, msg->traj[i].pos_pts[1].y, msg->traj[i].pos_pts[1].z);
+      Eigen::Vector3d cp2(msg->traj[i].pos_pts[2].x, msg->traj[i].pos_pts[2].y, msg->traj[i].pos_pts[2].z);
+      Eigen::Vector3d swarm_start_pt = (cp0+4*cp1+cp2) / 6;
+      if ( (swarm_start_pt - odom_pos_).norm() > planning_horizen_*4.0f/3.0f )
+      {
+        planner_manager_->swarm_trajs_buf_[i].drone_id = -1;
+        continue;
+      }
+
+      Eigen::MatrixXd pos_pts(3, msg->traj[i].pos_pts.size());
+      Eigen::VectorXd knots(msg->traj[i].knots.size());
+      for (size_t j = 0; j < msg->traj[i].knots.size(); ++j)
+      {
+        knots(j) = msg->traj[i].knots[j];
+      }
+      for (size_t j = 0; j < msg->traj[i].pos_pts.size(); ++j)
+      {
+        pos_pts(0, j) = msg->traj[i].pos_pts[j].x;
+        pos_pts(1, j) = msg->traj[i].pos_pts[j].y;
+        pos_pts(2, j) = msg->traj[i].pos_pts[j].z;
+      }
+
+      planner_manager_->swarm_trajs_buf_[i].drone_id = i;
+
+      if (msg->traj[i].order % 2)
+      {
+        double cutback = (double)msg->traj[i].order / 2 + 1.5;
+        planner_manager_->swarm_trajs_buf_[i].duration_ = msg->traj[i].knots[msg->traj[i].knots.size() - ceil(cutback)];
+      }
+      else
+      {
+        double cutback = (double)msg->traj[i].order / 2 + 1.5;
+        planner_manager_->swarm_trajs_buf_[i].duration_ = (msg->traj[i].knots[msg->traj[i].knots.size() - floor(cutback)] + msg->traj[i].knots[msg->traj[i].knots.size() - ceil(cutback)]) / 2;
+      }
+
+      // planner_manager_->swarm_trajs_buf_[i].position_traj_ =
+      UniformBspline pos_traj(pos_pts, msg->traj[i].order, msg->traj[i].knots[1] - msg->traj[i].knots[0]);
+      pos_traj.setKnot(knots);
+      planner_manager_->swarm_trajs_buf_[i].position_traj_ = pos_traj;
+
+      planner_manager_->swarm_trajs_buf_[i].start_pos_ = planner_manager_->swarm_trajs_buf_[i].position_traj_.evaluateDeBoorT(0);
+
+      planner_manager_->swarm_trajs_buf_[i].start_time_ = msg->traj[i].start_time;
+    }
+
+    have_recv_pre_agent_ = true;
   }
 
   void EGOReplanFSM::changeFSMExecState(FSM_EXEC_STATE new_state, string pos_call)
