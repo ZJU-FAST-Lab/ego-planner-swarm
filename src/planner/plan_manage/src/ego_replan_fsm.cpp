@@ -18,7 +18,11 @@ namespace ego_planner
     nh.param("fsm/thresh_no_replan_meter", no_replan_thresh_, -1.0);
     nh.param("fsm/planning_horizon", planning_horizen_, -1.0);
     nh.param("fsm/planning_horizen_time", planning_horizen_time_, -1.0);
-    nh.param("fsm/emergency_time_", emergency_time_, 1.0);
+    nh.param("fsm/emergency_time", emergency_time_, 1.0);
+    nh.param("fsm/realworld_experiment", flag_realworld_experiment_, false);
+    nh.param("fsm/fail_safe", enable_fail_safe_, true);
+
+    have_trigger_ = !flag_realworld_experiment_;
 
     nh.param("fsm/waypoint_num", waypoint_num_, -1);
     for (int i = 0; i < waypoint_num_; i++)
@@ -56,13 +60,18 @@ namespace ego_planner
     data_disp_pub_ = nh.advertise<traj_utils::DataDisp>("planning/data_display", 100);
 
     if (target_type_ == TARGET_TYPE::MANUAL_TARGET)
+    {
       waypoint_sub_ = nh.subscribe("/waypoint_generator/waypoints", 1, &EGOReplanFSM::waypointCallback, this);
+    }
     else if (target_type_ == TARGET_TYPE::PRESET_TARGET)
     {
+      trigger_sub_ = nh.subscribe("/traj_start_trigger", 1, &EGOReplanFSM::triggerCallback, this);
       ros::Duration(1.0).sleep();
-      while (ros::ok() && !have_odom_)
+      ROS_WARN("Waiting for trigger from [n3ctrl] from RC");
+      while (ros::ok() && (!have_odom_ || !have_trigger_))
       {
         ros::spinOnce();
+        ros::Duration(0.001).sleep();
       }
       planGlobalTrajbyGivenWps();
     }
@@ -121,6 +130,13 @@ namespace ego_planner
     {
       ROS_ERROR("Unable to generate global trajectory!");
     }
+  }
+
+  void EGOReplanFSM::triggerCallback(const geometry_msgs::PoseStampedPtr &msg)
+  {
+    have_trigger_ = true;
+    cout << "Triggered!" << endl;
+    init_pt_ = odom_pos_;
   }
 
   void EGOReplanFSM::waypointCallback(const nav_msgs::PathConstPtr &msg)
@@ -379,7 +395,7 @@ namespace ego_planner
       if (!have_odom_)
         cout << "no odom." << endl;
       if (!have_target_)
-        cout << "wait for goal." << endl;
+        cout << "wait for goal or trigger." << endl;
       fsm_num = 0;
     }
 
@@ -387,7 +403,7 @@ namespace ego_planner
     {
     case INIT:
     {
-      if (!have_odom_)
+      if (!have_odom_ )
       {
         return;
       }
@@ -466,7 +482,7 @@ namespace ego_planner
     case REPLAN_TRAJ:
     {
 
-      if (planFromCurrentTraj(5))
+      if (planFromCurrentTraj(1))
       {
         changeFSMExecState(EXEC_TRAJ, "FSM");
         publishSwarmTrajs(false);
@@ -521,7 +537,7 @@ namespace ego_planner
       }
       else
       {
-        if (odom_vel_.norm() < 0.1)
+        if (enable_fail_safe_ && odom_vel_.norm() < 0.1)
           changeFSMExecState(GEN_NEW_TRAJ, "FSM");
       }
 
@@ -605,14 +621,39 @@ namespace ego_planner
     /* ---------- check trajectory ---------- */
     constexpr double time_step = 0.01;
     double t_cur = (ros::Time::now() - info->start_time_).toSec();
+    Eigen::Vector3d p_cur = info->position_traj_.evaluateDeBoorT(t_cur);
+    const double CLEARANCE = 1.0 * planner_manager_->getSwarmClearance();
+    double t_cur_global = ros::Time::now().toSec();
     double t_2_3 = info->duration_ * 2 / 3;
     for (double t = t_cur; t < info->duration_; t += time_step)
     {
       if (t_cur < t_2_3 && t >= t_2_3) // If t_cur < t_2_3, only the first 2/3 partition of the trajectory is considered valid and will get checked.
         break;
 
-      if (map->getInflateOccupancy(info->position_traj_.evaluateDeBoorT(t)))
+      bool occ = false;
+      occ |= map->getInflateOccupancy(info->position_traj_.evaluateDeBoorT(t));
+
+      for (size_t id = 0; id < planner_manager_->swarm_trajs_buf_.size(); id++)
       {
+        if ( (planner_manager_->swarm_trajs_buf_.at(id).drone_id != (int)id) || (planner_manager_->swarm_trajs_buf_.at(id).drone_id == planner_manager_->pp_.drone_id) )
+        {
+          continue;
+        }
+
+        double t_X = t_cur_global - planner_manager_->swarm_trajs_buf_.at(id).start_time_.toSec();
+        Eigen::Vector3d swarm_pridicted = planner_manager_->swarm_trajs_buf_.at(id).position_traj_.evaluateDeBoorT(t_X);
+        double dist = (p_cur - swarm_pridicted).norm();
+
+        if ( dist < CLEARANCE )
+        {
+          occ = true;
+          break;
+        }
+      }
+
+      if (occ)
+      {
+
         if (planFromCurrentTraj()) // Make a chance
         {
           changeFSMExecState(EXEC_TRAJ, "SAFETY");
@@ -737,10 +778,8 @@ namespace ego_planner
       }
       swarm_trajs_pub_.publish(multi_bspline_msgs_buf_);
     }
-    else
-    {
-      broadcast_bspline_pub_.publish(bspline);
-    }
+
+    broadcast_bspline_pub_.publish(bspline);
   }
 
   bool EGOReplanFSM::callEmergencyStop(Eigen::Vector3d stop_pos)
@@ -793,12 +832,13 @@ namespace ego_planner
       if (t < planner_manager_->global_data_.last_progress_time_ + 1e-5 && dist > planning_horizen_)
       {
         // todo
-        ROS_ERROR("last_progress_time_ ERROR !!!!!!!!!");
-        ROS_ERROR("last_progress_time_ ERROR !!!!!!!!!");
-        ROS_ERROR("last_progress_time_ ERROR !!!!!!!!!");
-        ROS_ERROR("last_progress_time_ ERROR !!!!!!!!!");
-        ROS_ERROR("last_progress_time_ ERROR !!!!!!!!!");
+        ROS_ERROR("last_progress_time_ ERROR, TODO!");
+        ROS_ERROR("last_progress_time_ ERROR, TODO!");
+        ROS_ERROR("last_progress_time_ ERROR, TODO!");
+        ROS_ERROR("last_progress_time_ ERROR, TODO!");
+        ROS_ERROR("last_progress_time_ ERROR, TODO!");
         cout << "dist=" << dist << endl;
+        cout << "planner_manager_->global_data_.last_progress_time_=" << planner_manager_->global_data_.last_progress_time_ << endl;
         return;
       }
       if (dist < dist_min)

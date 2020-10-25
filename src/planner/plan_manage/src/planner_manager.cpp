@@ -346,7 +346,7 @@ namespace ego_planner
 
     for ( double t=t_start; t<t_end; t+=0.03 )
     {
-      if ( (local_data_.position_traj_.evaluateDeBoorT(t - my_traj_start_time) - swarm_trajs_buf_[drone_id].position_traj_.evaluateDeBoorT(t - other_traj_start_time)).norm() < 0.9*bspline_optimizer_->getSwarmClearance() )
+      if ( (local_data_.position_traj_.evaluateDeBoorT(t - my_traj_start_time) - swarm_trajs_buf_[drone_id].position_traj_.evaluateDeBoorT(t - other_traj_start_time)).norm() < bspline_optimizer_->getSwarmClearance() )
       {
         return true;
       }

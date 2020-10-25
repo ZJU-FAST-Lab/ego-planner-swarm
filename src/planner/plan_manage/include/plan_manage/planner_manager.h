@@ -42,6 +42,8 @@ namespace ego_planner
 
     void setDroneIdtoOpt(void) { bspline_optimizer_->setDroneId(pp_.drone_id); }
 
+    double getSwarmClearance(void) { return bspline_optimizer_->getSwarmClearance(); }
+
     bool checkCollision(int drone_id);
     
 

@@ -75,7 +75,7 @@ void ObjPredictor::init() {
   /* get param */
   int queue_size, skip_nums;
 
-  node_handle_.param("prediction/obj_num", obj_num_, 5);
+  node_handle_.param("prediction/obj_num", obj_num_, 0);
   node_handle_.param("prediction/lambda", lambda_, 1.0);
   node_handle_.param("prediction/predict_rate", predict_rate_, 1.0);
   node_handle_.param("prediction/queue_size", queue_size, 10);

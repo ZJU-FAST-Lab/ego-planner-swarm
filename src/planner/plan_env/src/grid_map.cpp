@@ -633,13 +633,13 @@ void GridMap::clearAndInflateLocalMap()
       }
 
   // add virtual ceiling to limit flight height
-  // if (mp_.virtual_ceil_height_ > -0.5) {
-  //   int ceil_id = floor((mp_.virtual_ceil_height_ - mp_.map_origin_(2)) * mp_.resolution_inv_);
-  //   for (int x = md_.local_bound_min_(0); x <= md_.local_bound_max_(0); ++x)
-  //     for (int y = md_.local_bound_min_(1); y <= md_.local_bound_max_(1); ++y) {
-  //       md_.occupancy_buffer_inflate_[toAddress(x, y, ceil_id)] = 1;
-  //     }
-  // }
+  if (mp_.virtual_ceil_height_ > -0.5) {
+    int ceil_id = floor((mp_.virtual_ceil_height_ - mp_.map_origin_(2)) * mp_.resolution_inv_);
+    for (int x = md_.local_bound_min_(0); x <= md_.local_bound_max_(0); ++x)
+      for (int y = md_.local_bound_min_(1); y <= md_.local_bound_max_(1); ++y) {
+        md_.occupancy_buffer_inflate_[toAddress(x, y, ceil_id)] = 1;
+      }
+  }
 }
 
 void GridMap::visCallback(const ros::TimerEvent & /*event*/)
@@ -1037,7 +1037,7 @@ void GridMap::depthOdomCallback(const sensor_msgs::ImageConstPtr &img,
 //   node_.param("grid_map/show_occ_time", mp_.show_occ_time_, false);
 //   node_.param("grid_map/pose_type", mp_.pose_type_, 1);
 
-//   node_.param("grid_map/frame_id", mp_.frame_id_, string("world"));
+//   node_.param("grid_map/frame_id", debug_detect_result_mp_.frame_id_, string("world"));
 //   node_.param("grid_map/local_map_margin", mp_.local_map_margin_, 1);
 //   node_.param("grid_map/ground_height", mp_.ground_height_, 1.0);
 

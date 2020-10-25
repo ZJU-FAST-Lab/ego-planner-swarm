@@ -4,9 +4,9 @@
   <arg name="map_size_z_"/>
 
   <arg name="odometry_topic"/>
-  <arg name="camera_pose_topic"/>
+  <!-- <arg name="camera_pose_topic"/> -->
   <arg name="depth_topic"/>
-  <arg name="cloud_topic"/>
+  <!-- <arg name="cloud_topic"/> -->
 
   <arg name="cx"/>
   <arg name="cy"/>
@@ -37,8 +37,6 @@
   <arg name="flight_type"/>
   <arg name="use_distinctive_trajs"/>
 
-  <arg name="obj_num_set"/>
-
   <arg name="drone_id"/>
 
 
@@ -46,14 +44,14 @@
   <!-- <node pkg="ego_planner" name="ego_planner_node" type="ego_planner_node" output="screen" launch-prefix="valgrind"> -->
   <node pkg="ego_planner" name="drone_$(arg drone_id)_ego_planner_node" type="ego_planner_node" output="screen">
   
-    <remap from="~odom_world" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
+    <remap from="~odom_world" to="$(arg odometry_topic)"/>
     <remap from="~planning/bspline" to = "/drone_$(arg drone_id)_planning/bspline"/>
     <remap from="~planning/data_display" to = "/drone_$(arg drone_id)_planning/data_display"/>
 
-    <remap from="~grid_map/odom" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
-    <remap from="~grid_map/cloud" to="/drone_$(arg drone_id)_$(arg cloud_topic)"/>
-    <remap from="~grid_map/pose"   to = "/drone_$(arg drone_id)_$(arg camera_pose_topic)"/> 
-    <remap from="~grid_map/depth" to = "/drone_$(arg drone_id)_$(arg depth_topic)"/>
+    <remap from="~grid_map/odom" to="$(arg odometry_topic)"/>
+    <!-- <remap from="~grid_map/cloud" to="/drone_$(arg drone_id)_$(arg cloud_topic)"/> -->
+    <!-- <remap from="~grid_map/pose"   to = "$(arg camera_pose_topic)"/>  -->
+    <remap from="~grid_map/depth" to = "$(arg depth_topic)"/>
     
 
     <!-- planning fsm -->
@@ -63,8 +61,8 @@
     <param name="fsm/planning_horizon" value="$(arg planning_horizon)" type="double"/> <!--always set to 1.5 times grater than sensing horizen-->
     <param name="fsm/planning_horizen_time" value="3" type="double"/>
     <param name="fsm/emergency_time" value="1.0" type="double"/>
-    <param name="fsm/realworld_experiment" value="false"/>
-    <param name="fsm/fail_safe" value="true"/>
+    <param name="fsm/realworld_experiment" value="true"/>
+    <param name="fsm/fail_safe" value="false"/>
 
     <param name="fsm/waypoint_num" value="$(arg point_num)" type="int"/>
     <param name="fsm/waypoint0_x" value="$(arg point0_x)" type="double"/>
@@ -90,7 +88,7 @@
     <param name="grid_map/local_update_range_x"  value="5.5" /> 
     <param name="grid_map/local_update_range_y"  value="5.5" /> 
     <param name="grid_map/local_update_range_z"  value="4.5" /> 
-    <param name="grid_map/obstacles_inflation"     value="0.099" /> 
+    <param name="grid_map/obstacles_inflation"     value="0.199" /> 
     <param name="grid_map/local_map_margin" value="10"/>
     <param name="grid_map/ground_height"        value="-0.01"/>
     <!-- camera parameter -->
@@ -113,19 +111,19 @@
     <param name="grid_map/p_max"  value="0.90"/>
     <param name="grid_map/p_occ"  value="0.80"/>
     <param name="grid_map/min_ray_length" value="0.1"/>
-    <param name="grid_map/max_ray_length" value="4.5"/>
+    <param name="grid_map/max_ray_length" value="5.0"/>
 
-    <param name="grid_map/virtual_ceil_height"   value="2.5"/>
+    <param name="grid_map/virtual_ceil_height"   value="1.8"/>
     <param name="grid_map/visualization_truncate_height"   value="2.4"/>
     <param name="grid_map/show_occ_time"  value="false"/>
-    <param name="grid_map/pose_type"     value="1"/>  
+    <param name="grid_map/pose_type"     value="2"/>  
     <param name="grid_map/frame_id"      value="world"/>
 
   <!-- planner manager -->
     <param name="manager/max_vel" value="$(arg max_vel)" type="double"/>
     <param name="manager/max_acc" value="$(arg max_acc)" type="double"/>
     <param name="manager/max_jerk" value="4" type="double"/>
-    <param name="manager/control_points_distance" value="0.4" type="double"/>
+    <param name="manager/control_points_distance" value="0.3" type="double"/>
     <param name="manager/feasibility_tolerance" value="0.05" type="double"/>
     <param name="manager/planning_horizon" value="$(arg planning_horizon)" type="double"/>
     <param name="manager/use_distinctive_trajs" value="$(arg use_distinctive_trajs)" type="bool"/>
@@ -133,24 +131,17 @@
 
   <!-- trajectory optimization -->
     <param name="optimization/lambda_smooth" value="1.0" type="double"/>
-    <param name="optimization/lambda_collision" value="0.5" type="double"/>
+    <param name="optimization/lambda_collision" value="0.8" type="double"/>
     <param name="optimization/lambda_feasibility" value="0.1" type="double"/>
-    <param name="optimization/lambda_fitness" value="1.0" type="double"/>
+    <param name="optimization/lambda_fitness" value="0.2" type="double"/>
     <param name="optimization/dist0" value="0.5" type="double"/>
-    <param name="optimization/swarm_clearance" value="0.5" type="double"/>
+    <param name="optimization/swarm_clearance" value="0.8" type="double"/>
     <param name="optimization/max_vel" value="$(arg max_vel)" type="double"/>
     <param name="optimization/max_acc" value="$(arg max_acc)" type="double"/>
 
     <param name="bspline/limit_vel" value="$(arg max_vel)" type="double"/>
     <param name="bspline/limit_acc" value="$(arg max_acc)" type="double"/>
     <param name="bspline/limit_ratio" value="1.1" type="double"/>
-
-  <!-- objects prediction -->
-    <param name="prediction/obj_num" value="$(arg obj_num_set)" type="int"/>
-    <param name="prediction/lambda" value="1.0" type="double"/>
-    <param name="prediction/predict_rate" value="1.0" type="double"/>
-  
-  
 
 
   </node>

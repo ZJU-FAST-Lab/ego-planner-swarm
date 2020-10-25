@@ -64,9 +64,12 @@ int connect_to_next_drone(const char *ip, const int port)
 
   if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
   {
-    printf("\nConnection Failed \n");
+    ROS_WARN("Tcp connection to drone_%d Failed", drone_id_+1);
     return -1;
   }
+
+  char str[INET_ADDRSTRLEN];
+  ROS_INFO("Connect to %s success!", inet_ntop(AF_INET, &serv_addr.sin_addr, str, sizeof(str)));
 
   return sock;
 }
@@ -142,6 +145,9 @@ int wait_connection_from_previous_drone(const int port, int &server_fd, int &new
     perror("accept");
     exit(EXIT_FAILURE);
   }
+
+  char str[INET_ADDRSTRLEN];
+  ROS_INFO( "Receive tcp connection from %s", inet_ntop(AF_INET, &address.sin_addr, str, sizeof(str)) );
 
   return new_socket;
 }
@@ -606,6 +612,8 @@ void odom_sub_udp_cb(const nav_msgs::OdometryPtr &msg)
   }
   t_last = t_now;
 
+  msg->child_frame_id = string("drone_") + std::to_string(drone_id_);
+
   int len = serializeOdom(msg);
 
   if (sendto(udp_send_fd_, udp_send_buf_, len, 0, (struct sockaddr *)&addr_udp_send_, sizeof(addr_udp_send_)) <= 0)
@@ -650,6 +658,14 @@ void server_fun()
   while (true)
   {
     valread = read(recv_sock_, recv_buf_, BUF_LEN);
+
+    if ( valread <= 0 )
+    {
+      ROS_ERROR("Received message length <= 0, maybe connection has lost");
+      close(recv_sock_);
+      close(server_fd_);
+      return;
+    }
 
     if (valread == deserializeMultiBsplines(bsplines_msg_))
     {
@@ -739,7 +755,7 @@ void udp_recv_fun()
 
     default:
 
-      ROS_ERROR("Unknown received message???");
+      //ROS_ERROR("Unknown received message???");
 
       break;
     }
@@ -761,6 +777,30 @@ int main(int argc, char **argv)
   stop_msg_.reset(new std_msgs::Empty);
   bspline_msg_.reset(new traj_utils::Bspline);
 
+  if (drone_id_ == -1)
+  {
+    ROS_ERROR("Wrong drone_id!");
+    exit(EXIT_FAILURE);
+  }
+
+  string sub_traj_topic_name = string("/drone_") + std::to_string(drone_id_) + string("_planning/swarm_trajs");
+  swarm_trajs_sub_ = nh.subscribe(sub_traj_topic_name.c_str(), 10, multitraj_sub_tcp_cb, ros::TransportHints().tcpNoDelay());
+
+  if ( drone_id_ >= 1 )
+  {
+    string pub_traj_topic_name = string("/drone_") + std::to_string(drone_id_ - 1) + string("_planning/swarm_trajs");
+    swarm_trajs_pub_ = nh.advertise<traj_utils::MultiBsplines>(pub_traj_topic_name.c_str(), 10);
+  }
+
+  other_odoms_sub_ = nh.subscribe("my_odom", 10, odom_sub_udp_cb, ros::TransportHints().tcpNoDelay());
+  other_odoms_pub_ = nh.advertise<nav_msgs::Odometry>("/others_odom", 10);
+
+  //emergency_stop_sub_ = nh.subscribe("emergency_stop_broadcast", 10, emergency_stop_sub_udp_cb, ros::TransportHints().tcpNoDelay());
+  //emergency_stop_pub_ = nh.advertise<std_msgs::Empty>("emergency_stop_recv", 10);
+
+  one_traj_sub_ = nh.subscribe("/broadcast_bspline", 100, one_traj_sub_udp_cb, ros::TransportHints().tcpNoDelay());
+  one_traj_pub_ = nh.advertise<traj_utils::Bspline>("/broadcast_bspline2", 100);
+
   boost::thread recv_thd(server_fun);
   recv_thd.detach();
   ros::Duration(0.1).sleep();
@@ -773,27 +813,6 @@ int main(int argc, char **argv)
 
   // UDP connect
   udp_send_fd_ = init_broadcast(udp_ip_.c_str(), UDP_PORT);
-
-  if (drone_id_ == -1)
-  {
-    ROS_ERROR("Wrong drone_id!");
-    exit(EXIT_FAILURE);
-  }
-
-  string sub_traj_topic_name = string("/drone_") + std::to_string(drone_id_) + string("_planning/swarm_trajs");
-  swarm_trajs_sub_ = nh.subscribe(sub_traj_topic_name.c_str(), 10, multitraj_sub_tcp_cb, ros::TransportHints().tcpNoDelay());
-
-  string pub_traj_topic_name = string("/drone_") + std::to_string(drone_id_ + 1) + string("_planning/swarm_trajs");
-  swarm_trajs_pub_ = nh.advertise<traj_utils::MultiBsplines>(pub_traj_topic_name.c_str(), 10);
-
-  //other_odoms_sub_ = nh.subscribe("my_odom", 10, odom_sub_udp_cb, ros::TransportHints().tcpNoDelay());
-  //other_odoms_pub_ = nh.advertise<nav_msgs::Odometry>("others_odom", 10);
-
-  //emergency_stop_sub_ = nh.subscribe("emergency_stop_broadcast", 10, emergency_stop_sub_udp_cb, ros::TransportHints().tcpNoDelay());
-  //emergency_stop_pub_ = nh.advertise<std_msgs::Empty>("emergency_stop_recv", 10);
-
-  one_traj_sub_ = nh.subscribe("/broadcast_bspline", 100, one_traj_sub_udp_cb, ros::TransportHints().tcpNoDelay());
-  one_traj_pub_ = nh.advertise<traj_utils::Bspline>("/broadcast_bspline2", 100);
 
   cout << "[rosmsg_tcp_bridge] start running" << endl;
 
