@@ -1,0 +1,23 @@
+<launch>
+  <arg name="agent_num" value="10"/>
+  <arg name="debug_flag" value="false"/>
+  <arg name="planner_type" value="0"/>
+  <arg name="rect_obs_num" value="0"/>
+  <arg name="circle_obs_num" value="0"/>
+  <arg name="test_id" value="1"/>
+
+  <node pkg="traj_evaluation" name="traj_evaluation_node" type="traj_evaluation_node" output="screen">
+    <param name="agent_num" value="$(arg agent_num)"/>
+    <param name="debug_flag" value="$(arg debug_flag)"/>
+    <param name="planner_type" value="$(arg planner_type)"/>
+    <param name="color/a" value="1.0"/>    
+    <param name="color/r" value="1.0"/>        
+    <param name="color/g" value="0.0"/>        
+    <param name="color/b" value="0.0"/>       
+    <param name="robot_scale" value="1.0"/>
+    <param name="result_fn"  value="$(find traj_evaluation)/benchmark/ego/ego_obs_$(arg rect_obs_num)_$(arg circle_obs_num)_$(arg test_id).txt" />
+  </node>
+
+  <node pkg="rviz" name="rviz" type="rviz" args="-d $(find traj_evaluation)/launch/demo.rviz" required="true"/>
+
+</launch>
