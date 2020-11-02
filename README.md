@@ -23,8 +23,13 @@ The temperature measurements from which the average is computed.
 
 Published Topics
 
-
 ## Installation
+
+### Rbp
+
+Rbp is an offline approach, every drone executes trajectory after completing trajectory has been planed. Topic publish is managed by a class rbp_publisher, it will publish the whole path as the `nav_msgs::Path` format all the time. In order to calculate the path length and executing time, a signal indicating that drone has reached the goal is needed, but there is no such function implemented in rbp simulation. A easy solution is that after all the drones have reached their goals, launch the evaluation node because the evaluation node will subscribe the complete path only once and perform evaluation process on the whole path and then write results to local file.
+
+
 
 ### Installation from Packages
 
