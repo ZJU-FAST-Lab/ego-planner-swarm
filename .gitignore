@@ -1,0 +1,4 @@
+quadrotor_simulator/
+dorca/
+*.pcd
+*.obj
