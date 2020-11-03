@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
 
   // publisher depth image and color image
   pub_cloud =
-      nh.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/cloud", 10);
+      nh.advertise<sensor_msgs::PointCloud2>("pcl_render_node/cloud", 10);
 
   double sensing_duration = 1.0 / sensing_rate * 2.5;
 

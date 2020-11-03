@@ -417,8 +417,8 @@ int main(int argc, char** argv) {
 
   _odom_sub = n.subscribe("odometry", 50, rcvOdometryCallbck);
 
-  // click_map_pub_ =
-  //     n.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 1);
+  click_map_pub_ =
+      n.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 1);
   // ros::Subscriber click_sub = n.subscribe("/goal", 10, clickCallback);
 
   n.param("init_state_x", _init_x, 0.0);
@@ -443,7 +443,7 @@ int main(int argc, char** argv) {
   n.param("ObstacleShape/theta", theta_, 7.0);
 
   n.param("sensing/radius", _sensing_range, 10.0);
-  n.param("sensing/radius", _sense_rate, 10.0);
+  n.param("sensing/rate", _sense_rate, 10.0);
 
   n.param("min_distance", _min_dist, 1.0);
 

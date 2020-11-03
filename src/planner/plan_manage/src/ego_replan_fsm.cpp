@@ -53,8 +53,8 @@ namespace ego_planner
     string pub_topic_name = string("/drone_") + std::to_string(planner_manager_->pp_.drone_id) + string("_planning/swarm_trajs");
     swarm_trajs_pub_ = nh.advertise<traj_utils::MultiBsplines>(pub_topic_name.c_str(), 10);
 
-    broadcast_bspline_pub_ = nh.advertise<traj_utils::Bspline>("/broadcast_bspline", 10);
-    broadcast_bspline_sub_ = nh.subscribe("/broadcast_bspline", 100, &EGOReplanFSM::BroadcastBsplineCallback, this, ros::TransportHints().tcpNoDelay());
+    broadcast_bspline_pub_ = nh.advertise<traj_utils::Bspline>("planning/broadcast_bspline_from_planner", 10);
+    broadcast_bspline_sub_ = nh.subscribe("planning/broadcast_bspline_to_planner", 100, &EGOReplanFSM::BroadcastBsplineCallback, this, ros::TransportHints().tcpNoDelay());
 
     bspline_pub_ = nh.advertise<traj_utils::Bspline>("planning/bspline", 10);
     data_disp_pub_ = nh.advertise<traj_utils::DataDisp>("planning/data_display", 100);
@@ -617,6 +617,14 @@ namespace ego_planner
 
     if (exec_state_ == WAIT_TARGET || info->start_time_.toSec() < 1e-5)
       return;
+
+    /* ---------- check lost of depth ---------- */
+    if ( map->getOdomDepthTimeout() )
+    {
+      ROS_ERROR("Depth Lost! EMERGENCY_STOP");
+      enable_fail_safe_ = false;
+      changeFSMExecState(EMERGENCY_STOP, "SAFETY");
+    }
 
     /* ---------- check trajectory ---------- */
     constexpr double time_step = 0.01;

@@ -47,6 +47,8 @@
     <remap from="~odom_world" to="$(arg odometry_topic)"/>
     <remap from="~planning/bspline" to = "/drone_$(arg drone_id)_planning/bspline"/>
     <remap from="~planning/data_display" to = "/drone_$(arg drone_id)_planning/data_display"/>
+    <remap from="~planning/broadcast_bspline_from_planner" to = "/broadcast_bspline"/>
+    <remap from="~planning/broadcast_bspline_to_planner" to = "/broadcast_bspline2"/>
 
     <remap from="~grid_map/odom" to="$(arg odometry_topic)"/>
     <!-- <remap from="~grid_map/cloud" to="/drone_$(arg drone_id)_$(arg cloud_topic)"/> -->
@@ -116,6 +118,7 @@
     <param name="grid_map/virtual_ceil_height"   value="1.8"/>
     <param name="grid_map/visualization_truncate_height"   value="2.4"/>
     <param name="grid_map/show_occ_time"  value="false"/>
+    <param name="grid_map/odom_depth_timeout"  value="1.0"/>
     <param name="grid_map/pose_type"     value="2"/>  
     <param name="grid_map/frame_id"      value="world"/>
 

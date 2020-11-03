@@ -58,6 +58,9 @@ struct MappingParameters {
   /* camera parameters */
   double cx_, cy_, fx_, fy_;
 
+  /* time out */
+  double odom_depth_timeout_;
+
   /* depth image projection filtering */
   double depth_filter_maxdist_, depth_filter_mindist_, depth_filter_tolerance_;
   int depth_filter_margin_;
@@ -106,6 +109,11 @@ struct MappingData {
   bool occ_need_update_, local_updated_;
   bool has_first_depth_;
   bool has_odom_, has_cloud_;
+
+  // odom_depth_timeout_
+  ros::Time last_occ_update_time_;
+  bool flag_depth_odom_timeout_;
+  bool flag_use_depth_fusion;
 
   // depth image projected point cloud
 
@@ -174,6 +182,7 @@ public:
   inline double getResolution();
   Eigen::Vector3d getOrigin();
   int getVoxelNum();
+  bool getOdomDepthTimeout() { return md_.flag_depth_odom_timeout_; }
 
   typedef std::shared_ptr<GridMap> Ptr;
 

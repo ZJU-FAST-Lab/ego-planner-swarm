@@ -6,17 +6,57 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /drone01/Planning1
+        - /drone01/Planning1/drone_path1
+        - /drone01/Planning1/drone_path1/Offset1
+        - /drone01/Mapping1
+        - /drone01/Mapping1/map inflate1
+        - /drone01/Simulation1
+        - /drone11/Planning1
+        - /drone11/Planning1/drone_path1
+        - /drone11/Mapping1
         - /drone11/Mapping1/map inflate1
+        - /drone11/Simulation1
+        - /drone21/Planning1
+        - /drone21/Planning1/drone_path1
         - /drone21/Mapping1
         - /drone21/Mapping1/map inflate1
+        - /drone31/Planning1
+        - /drone31/Planning1/drone_path1
         - /drone31/Mapping1
         - /drone31/Mapping1/map inflate1
+        - /drone41/Planning1
+        - /drone41/Planning1/drone_path1
         - /drone41/Mapping1
         - /drone41/Mapping1/map inflate1
+        - /drone51/Planning1
+        - /drone51/Planning1/drone_path1
         - /drone51/Mapping1
         - /drone51/Mapping1/map inflate1
-      Splitter Ratio: 0.48477751
-    Tree Height: 715
+        - /drone61/Planning1
+        - /drone61/Planning1/drone_path1
+        - /drone61/Mapping1
+        - /drone61/Mapping1/map inflate1
+        - /drone71/Planning1
+        - /drone71/Planning1/InitTraj1
+        - /drone71/Planning1/drone_path1
+        - /drone71/Mapping1
+        - /drone71/Mapping1/map inflate1
+        - /drone71/Simulation1
+        - /drone71/Simulation1/robot1
+        - /drone81/Planning1
+        - /drone81/Planning1/drone_path1
+        - /drone81/Mapping1
+        - /drone81/Mapping1/map inflate1
+        - /drone81/Simulation1/robot1
+        - /drone91/Planning1
+        - /drone91/Planning1/drone_path1
+        - /drone91/Mapping1
+        - /drone91/Mapping1/map inflate1
+        - /drone91/Simulation1
+        - /drone91/Simulation1/robot1
+      Splitter Ratio: 0.436111122
+    Tree Height: 805
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -29,7 +69,6 @@ Panels:
   - Class: rviz/Views
     Expanded:
       - /Current View1
-      - /ThirdPersonFollower1
     Name: Views
     Splitter Ratio: 0.5
   - Class: rviz/Time
@@ -64,10 +103,10 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 40
+      Plane Cell Count: 1000
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
+    - Alpha: 0.200000003
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 2
@@ -134,30 +173,30 @@ Visualization Manager:
               Queue Size: 100
               Value: false
             - Class: rviz/Marker
-              Enabled: true
+              Enabled: false
               Marker Topic: /drone_0_ego_planner_node/init_list
               Name: InitTraj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
-              Value: true
+              Value: false
             - Alpha: 1
               Buffer Length: 1
               Class: rviz/Path
-              Color: 25; 255; 0
+              Color: 29; 108; 212
               Enabled: true
               Head Diameter: 0.300000012
               Head Length: 0.200000003
               Length: 0.300000012
-              Line Style: Lines
-              Line Width: 0.0299999993
+              Line Style: Billboards
+              Line Width: 0.100000001
               Name: drone_path
               Offset:
                 X: 0
                 Y: 0
                 Z: 0
               Pose Color: 255; 85; 255
-              Pose Style: Axes
+              Pose Style: None
               Radius: 0.0299999993
               Shaft Diameter: 0.100000001
               Shaft Length: 0.100000001
@@ -171,13 +210,13 @@ Visualization Manager:
             - Alpha: 1
               Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
-                Max Value: 2.33999991
-                Min Value: 0.0399999991
+                Max Value: 1.63999999
+                Min Value: 0.439999998
                 Value: true
               Axis: Z
               Channel Name: intensity
               Class: rviz/PointCloud2
-              Color: 170; 85; 0
+              Color: 29; 108; 212
               Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
@@ -263,30 +302,30 @@ Visualization Manager:
               Queue Size: 100
               Value: false
             - Class: rviz/Marker
-              Enabled: true
+              Enabled: false
               Marker Topic: /drone_1_ego_planner_node/init_list
               Name: InitTraj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
-              Value: true
+              Value: false
             - Alpha: 1
               Buffer Length: 1
               Class: rviz/Path
-              Color: 25; 255; 0
+              Color: 255; 170; 0
               Enabled: true
               Head Diameter: 0.300000012
               Head Length: 0.200000003
               Length: 0.300000012
-              Line Style: Lines
-              Line Width: 0.0299999993
+              Line Style: Billboards
+              Line Width: 0.100000001
               Name: drone_path
               Offset:
                 X: 0
                 Y: 0
                 Z: 0
               Pose Color: 255; 85; 255
-              Pose Style: Axes
+              Pose Style: None
               Radius: 0.0299999993
               Shaft Diameter: 0.100000001
               Shaft Length: 0.100000001
@@ -306,7 +345,7 @@ Visualization Manager:
               Axis: Z
               Channel Name: intensity
               Class: rviz/PointCloud2
-              Color: 170; 0; 255
+              Color: 255; 170; 0
               Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
@@ -392,30 +431,30 @@ Visualization Manager:
               Queue Size: 100
               Value: false
             - Class: rviz/Marker
-              Enabled: true
+              Enabled: false
               Marker Topic: /drone_2_ego_planner_node/init_list
               Name: InitTraj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
-              Value: true
+              Value: false
             - Alpha: 1
               Buffer Length: 1
               Class: rviz/Path
-              Color: 25; 255; 0
+              Color: 170; 170; 0
               Enabled: true
               Head Diameter: 0.300000012
               Head Length: 0.200000003
               Length: 0.300000012
-              Line Style: Lines
-              Line Width: 0.0299999993
+              Line Style: Billboards
+              Line Width: 0.100000001
               Name: drone_path
               Offset:
                 X: 0
                 Y: 0
                 Z: 0
               Pose Color: 255; 85; 255
-              Pose Style: Axes
+              Pose Style: None
               Radius: 0.0299999993
               Shaft Diameter: 0.100000001
               Shaft Length: 0.100000001
@@ -435,7 +474,7 @@ Visualization Manager:
               Axis: Z
               Channel Name: intensity
               Class: rviz/PointCloud2
-              Color: 0; 85; 255
+              Color: 170; 170; 0
               Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
@@ -521,30 +560,30 @@ Visualization Manager:
               Queue Size: 100
               Value: false
             - Class: rviz/Marker
-              Enabled: true
+              Enabled: false
               Marker Topic: /drone_3_ego_planner_node/init_list
               Name: InitTraj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
-              Value: true
+              Value: false
             - Alpha: 1
               Buffer Length: 1
               Class: rviz/Path
-              Color: 25; 255; 0
+              Color: 170; 0; 255
               Enabled: true
               Head Diameter: 0.300000012
               Head Length: 0.200000003
               Length: 0.300000012
-              Line Style: Lines
-              Line Width: 0.0299999993
+              Line Style: Billboards
+              Line Width: 0.100000001
               Name: drone_path
               Offset:
                 X: 0
                 Y: 0
                 Z: 0
               Pose Color: 255; 85; 255
-              Pose Style: Axes
+              Pose Style: None
               Radius: 0.0299999993
               Shaft Diameter: 0.100000001
               Shaft Length: 0.100000001
@@ -564,7 +603,7 @@ Visualization Manager:
               Axis: Z
               Channel Name: intensity
               Class: rviz/PointCloud2
-              Color: 255; 85; 0
+              Color: 170; 0; 255
               Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
@@ -650,30 +689,30 @@ Visualization Manager:
               Queue Size: 100
               Value: false
             - Class: rviz/Marker
-              Enabled: true
+              Enabled: false
               Marker Topic: /drone_4_ego_planner_node/init_list
               Name: InitTraj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
-              Value: true
+              Value: false
             - Alpha: 1
               Buffer Length: 1
               Class: rviz/Path
-              Color: 25; 255; 0
+              Color: 0; 170; 0
               Enabled: true
               Head Diameter: 0.300000012
               Head Length: 0.200000003
               Length: 0.300000012
-              Line Style: Lines
-              Line Width: 0.0299999993
+              Line Style: Billboards
+              Line Width: 0.100000001
               Name: drone_path
               Offset:
                 X: 0
                 Y: 0
                 Z: 0
               Pose Color: 255; 85; 255
-              Pose Style: Axes
+              Pose Style: None
               Radius: 0.0299999993
               Shaft Diameter: 0.100000001
               Shaft Length: 0.100000001
@@ -693,7 +732,7 @@ Visualization Manager:
               Axis: Z
               Channel Name: intensity
               Class: rviz/PointCloud2
-              Color: 85; 170; 0
+              Color: 0; 170; 0
               Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
@@ -779,30 +818,30 @@ Visualization Manager:
               Queue Size: 100
               Value: false
             - Class: rviz/Marker
-              Enabled: true
+              Enabled: false
               Marker Topic: /drone_5_ego_planner_node/init_list
               Name: InitTraj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
-              Value: true
+              Value: false
             - Alpha: 1
               Buffer Length: 1
               Class: rviz/Path
-              Color: 25; 255; 0
+              Color: 255; 0; 0
               Enabled: true
               Head Diameter: 0.300000012
               Head Length: 0.200000003
               Length: 0.300000012
-              Line Style: Lines
-              Line Width: 0.0299999993
+              Line Style: Billboards
+              Line Width: 0.100000001
               Name: drone_path
               Offset:
                 X: 0
                 Y: 0
                 Z: 0
               Pose Color: 255; 85; 255
-              Pose Style: Axes
+              Pose Style: None
               Radius: 0.0299999993
               Shaft Diameter: 0.100000001
               Shaft Length: 0.100000001
@@ -822,7 +861,7 @@ Visualization Manager:
               Axis: Z
               Channel Name: intensity
               Class: rviz/PointCloud2
-              Color: 170; 0; 0
+              Color: 255; 0; 0
               Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
@@ -871,9 +910,525 @@ Visualization Manager:
           Name: Simulation
       Enabled: true
       Name: drone5
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_6_ego_planner_node/goal_point
+              Name: goal_point
+              Namespaces:
+                "": true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /ego_planner_node/global_list
+              Name: global_path
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_6_ego_planner_node/optimal_list
+              Name: optimal_traj
+              Namespaces:
+                "": true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /ego_planner_node/a_star_list
+              Name: AStar
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /drone_6_ego_planner_node/init_list
+              Name: InitTraj
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Alpha: 1
+              Buffer Length: 1
+              Class: rviz/Path
+              Color: 190; 120; 121
+              Enabled: true
+              Head Diameter: 0.300000012
+              Head Length: 0.200000003
+              Length: 0.300000012
+              Line Style: Billboards
+              Line Width: 0.100000001
+              Name: drone_path
+              Offset:
+                X: 0
+                Y: 0
+                Z: 0
+              Pose Color: 255; 85; 255
+              Pose Style: None
+              Radius: 0.0299999993
+              Shaft Diameter: 0.100000001
+              Shaft Length: 0.100000001
+              Topic: /drone_6_odom_visualization/path
+              Unreliable: false
+              Value: true
+          Enabled: true
+          Name: Planning
+        - Class: rviz/Group
+          Displays:
+            - Alpha: 1
+              Autocompute Intensity Bounds: true
+              Autocompute Value Bounds:
+                Max Value: 2.33999991
+                Min Value: 0.0399999991
+                Value: true
+              Axis: Z
+              Channel Name: intensity
+              Class: rviz/PointCloud2
+              Color: 190; 120; 121
+              Color Transformer: FlatColor
+              Decay Time: 0
+              Enabled: true
+              Invert Rainbow: false
+              Max Color: 255; 255; 255
+              Max Intensity: 4096
+              Min Color: 0; 0; 0
+              Min Intensity: 0
+              Name: map inflate
+              Position Transformer: XYZ
+              Queue Size: 10
+              Selectable: true
+              Size (Pixels): 3
+              Size (m): 0.100000001
+              Style: Flat Squares
+              Topic: /drone_6_ego_planner_node/grid_map/occupancy_inflate
+              Unreliable: false
+              Use Fixed Frame: true
+              Use rainbow: true
+              Value: true
+          Enabled: true
+          Name: Mapping
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_6_odom_visualization/robot
+              Name: robot
+              Namespaces:
+                mesh: true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Image
+              Enabled: false
+              Image Topic: /drone_6_pcl_render_node/depth
+              Max Value: 1
+              Median window: 5
+              Min Value: 0
+              Name: depth
+              Normalize Range: true
+              Queue Size: 2
+              Transport Hint: raw
+              Unreliable: false
+              Value: false
+          Enabled: true
+          Name: Simulation
+      Enabled: true
+      Name: drone6
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_7_ego_planner_node/goal_point
+              Name: goal_point
+              Namespaces:
+                "": true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /ego_planner_node/global_list
+              Name: global_path
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_7_ego_planner_node/optimal_list
+              Name: optimal_traj
+              Namespaces:
+                "": true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /ego_planner_node/a_star_list
+              Name: AStar
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /drone_7_ego_planner_node/init_list
+              Name: InitTraj
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Alpha: 1
+              Buffer Length: 1
+              Class: rviz/Path
+              Color: 0; 170; 255
+              Enabled: true
+              Head Diameter: 0.300000012
+              Head Length: 0.200000003
+              Length: 0.300000012
+              Line Style: Billboards
+              Line Width: 0.100000001
+              Name: drone_path
+              Offset:
+                X: 0
+                Y: 0
+                Z: 0
+              Pose Color: 255; 85; 255
+              Pose Style: None
+              Radius: 0.0299999993
+              Shaft Diameter: 0.100000001
+              Shaft Length: 0.100000001
+              Topic: /drone_7_odom_visualization/path
+              Unreliable: false
+              Value: true
+          Enabled: true
+          Name: Planning
+        - Class: rviz/Group
+          Displays:
+            - Alpha: 1
+              Autocompute Intensity Bounds: true
+              Autocompute Value Bounds:
+                Max Value: 2.33999991
+                Min Value: 0.0399999991
+                Value: true
+              Axis: Z
+              Channel Name: intensity
+              Class: rviz/PointCloud2
+              Color: 0; 170; 255
+              Color Transformer: FlatColor
+              Decay Time: 0
+              Enabled: true
+              Invert Rainbow: false
+              Max Color: 255; 255; 255
+              Max Intensity: 4096
+              Min Color: 0; 0; 0
+              Min Intensity: 0
+              Name: map inflate
+              Position Transformer: XYZ
+              Queue Size: 10
+              Selectable: true
+              Size (Pixels): 3
+              Size (m): 0.100000001
+              Style: Flat Squares
+              Topic: /drone_5_ego_planner_node/grid_map/occupancy_inflate
+              Unreliable: false
+              Use Fixed Frame: true
+              Use rainbow: true
+              Value: true
+          Enabled: true
+          Name: Mapping
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_7_odom_visualization/robot
+              Name: robot
+              Namespaces:
+                mesh: true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Image
+              Enabled: false
+              Image Topic: /drone_5_pcl_render_node/depth
+              Max Value: 1
+              Median window: 5
+              Min Value: 0
+              Name: depth
+              Normalize Range: true
+              Queue Size: 2
+              Transport Hint: raw
+              Unreliable: false
+              Value: false
+          Enabled: true
+          Name: Simulation
+      Enabled: true
+      Name: drone7
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_8_ego_planner_node/goal_point
+              Name: goal_point
+              Namespaces:
+                "": true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /ego_planner_node/global_list
+              Name: global_path
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_8_ego_planner_node/optimal_list
+              Name: optimal_traj
+              Namespaces:
+                "": true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /ego_planner_node/a_star_list
+              Name: AStar
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /drone_8_ego_planner_node/init_list
+              Name: InitTraj
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Alpha: 1
+              Buffer Length: 1
+              Class: rviz/Path
+              Color: 226; 0; 158
+              Enabled: true
+              Head Diameter: 0.300000012
+              Head Length: 0.200000003
+              Length: 0.300000012
+              Line Style: Billboards
+              Line Width: 0.100000001
+              Name: drone_path
+              Offset:
+                X: 0
+                Y: 0
+                Z: 0
+              Pose Color: 255; 85; 255
+              Pose Style: None
+              Radius: 0.0299999993
+              Shaft Diameter: 0.100000001
+              Shaft Length: 0.100000001
+              Topic: /drone_8_odom_visualization/path
+              Unreliable: false
+              Value: true
+          Enabled: true
+          Name: Planning
+        - Class: rviz/Group
+          Displays:
+            - Alpha: 1
+              Autocompute Intensity Bounds: true
+              Autocompute Value Bounds:
+                Max Value: 2.33999991
+                Min Value: 0.0399999991
+                Value: true
+              Axis: Z
+              Channel Name: intensity
+              Class: rviz/PointCloud2
+              Color: 226; 0; 158
+              Color Transformer: FlatColor
+              Decay Time: 0
+              Enabled: true
+              Invert Rainbow: false
+              Max Color: 255; 255; 255
+              Max Intensity: 4096
+              Min Color: 0; 0; 0
+              Min Intensity: 0
+              Name: map inflate
+              Position Transformer: XYZ
+              Queue Size: 10
+              Selectable: true
+              Size (Pixels): 3
+              Size (m): 0.100000001
+              Style: Flat Squares
+              Topic: /drone_8_ego_planner_node/grid_map/occupancy_inflate
+              Unreliable: false
+              Use Fixed Frame: true
+              Use rainbow: true
+              Value: true
+          Enabled: true
+          Name: Mapping
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_8_odom_visualization/robot
+              Name: robot
+              Namespaces:
+                mesh: true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Image
+              Enabled: false
+              Image Topic: /drone_5_pcl_render_node/depth
+              Max Value: 1
+              Median window: 5
+              Min Value: 0
+              Name: depth
+              Normalize Range: true
+              Queue Size: 2
+              Transport Hint: raw
+              Unreliable: false
+              Value: false
+          Enabled: true
+          Name: Simulation
+      Enabled: true
+      Name: drone8
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_9_ego_planner_node/goal_point
+              Name: goal_point
+              Namespaces:
+                "": true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /ego_planner_node/global_list
+              Name: global_path
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_9_ego_planner_node/optimal_list
+              Name: optimal_traj
+              Namespaces:
+                "": true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /ego_planner_node/a_star_list
+              Name: AStar
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/Marker
+              Enabled: false
+              Marker Topic: /drone_9_ego_planner_node/init_list
+              Name: InitTraj
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Alpha: 1
+              Buffer Length: 1
+              Class: rviz/Path
+              Color: 170; 85; 0
+              Enabled: true
+              Head Diameter: 0.300000012
+              Head Length: 0.200000003
+              Length: 0.300000012
+              Line Style: Billboards
+              Line Width: 0.100000001
+              Name: drone_path
+              Offset:
+                X: 0
+                Y: 0
+                Z: 0
+              Pose Color: 255; 85; 255
+              Pose Style: None
+              Radius: 0.0299999993
+              Shaft Diameter: 0.100000001
+              Shaft Length: 0.100000001
+              Topic: /drone_9_odom_visualization/path
+              Unreliable: false
+              Value: true
+          Enabled: true
+          Name: Planning
+        - Class: rviz/Group
+          Displays:
+            - Alpha: 1
+              Autocompute Intensity Bounds: true
+              Autocompute Value Bounds:
+                Max Value: 2.33999991
+                Min Value: 0.0399999991
+                Value: true
+              Axis: Z
+              Channel Name: intensity
+              Class: rviz/PointCloud2
+              Color: 170; 85; 0
+              Color Transformer: FlatColor
+              Decay Time: 0
+              Enabled: true
+              Invert Rainbow: false
+              Max Color: 255; 255; 255
+              Max Intensity: 4096
+              Min Color: 0; 0; 0
+              Min Intensity: 0
+              Name: map inflate
+              Position Transformer: XYZ
+              Queue Size: 10
+              Selectable: true
+              Size (Pixels): 3
+              Size (m): 0.100000001
+              Style: Flat Squares
+              Topic: /drone_9_ego_planner_node/grid_map/occupancy_inflate
+              Unreliable: false
+              Use Fixed Frame: true
+              Use rainbow: true
+              Value: true
+          Enabled: true
+          Name: Mapping
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /drone_9_odom_visualization/robot
+              Name: robot
+              Namespaces:
+                mesh: true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Image
+              Enabled: false
+              Image Topic: /drone_5_pcl_render_node/depth
+              Max Value: 1
+              Median window: 5
+              Min Value: 0
+              Name: depth
+              Normalize Range: true
+              Queue Size: 2
+              Transport Hint: raw
+              Unreliable: false
+              Value: false
+          Enabled: true
+          Name: Simulation
+      Enabled: true
+      Name: drone9
   Enabled: true
   Global Options:
-    Background Color: 255; 253; 224
+    Background Color: 255; 255; 255
     Default Light: true
     Fixed Frame: world
     Frame Rate: 30
@@ -894,54 +1449,68 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz/ThirdPersonFollower
-      Distance: 21.8048782
+      Class: rviz/Orbit
+      Distance: 46.8231964
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 7.58240604
-        Y: 0.649578571
-        Z: 2.3272647e-05
+        X: -3.11073303
+        Y: -0.0837666467
+        Z: -1.17353129
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.779797077
+      Pitch: 1.00479686
       Target Frame: world
-      Value: ThirdPersonFollower (rviz)
-      Yaw: 3.12401199
+      Value: Orbit (rviz)
+      Yaw: 3.13840103
     Saved:
-      - Class: rviz/ThirdPersonFollower
-        Distance: 17.4853859
+      - Class: rviz/FPS
         Enable Stereo Rendering:
           Stereo Eye Separation: 0.0599999987
           Stereo Focal Distance: 1
           Swap Stereo Eyes: false
           Value: false
-        Focal Point:
-          X: -16.3080025
-          Y: 0.44920516
-          Z: 8.5896736e-06
-        Focal Shape Fixed Size: true
-        Focal Shape Size: 0.0500000007
         Invert Z Axis: false
-        Name: ThirdPersonFollower
+        Name: FPS
         Near Clip Distance: 0.00999999978
-        Pitch: 1.03479683
-        Target Frame: <Fixed Frame>
-        Value: ThirdPersonFollower (rviz)
-        Yaw: 3.15040731
+        Pitch: 0.400000006
+        Position:
+          X: -11
+          Y: 0
+          Z: 8
+        Target Frame: my_view
+        Value: FPS (rviz)
+        Yaw: 0
+      - Class: rviz/FPS
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.0599999987
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Invert Z Axis: false
+        Name: FPS
+        Near Clip Distance: 0.00999999978
+        Pitch: 0.5
+        Position:
+          X: -10
+          Y: 0
+          Z: 10
+        Target Frame: my_view
+        Value: FPS (rviz)
+        Yaw: 0
 Window Geometry:
   Displays:
-    collapsed: true
+    collapsed: false
   Height: 1388
-  Hide Left Dock: true
+  Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001ad00000526fc0200000013fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007300000000280000030c000000d700fffffffb0000000a00560069006500770073000000033a00000214000000ad00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d00650072006100000001d1000000b50000000000000000fb0000000a0049006d00610067006502000001a2000001e1000000f8000000b5fb0000000a00640065007000740068000000031d000002310000001600fffffffb0000000a0049006d0061006700650100000415000000f80000000000000000fb0000000a0049006d00610067006501000003f4000001190000000000000000fb0000000a0064006500700074006800000004a2000000ac0000001600fffffffb0000000a006400650070007400680000000398000001b60000001600fffffffb0000000a0064006500700074006800000004b9000000950000001600fffffffb0000000a006400650070007400680000000481000000cd0000001600fffffffb0000000a006400650070007400680000000429000001250000001600ffffff000000010000010f00000385fc0200000002fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000006100000003bfc0100000002fb0000000800540069006d00650000000000000006100000030000fffffffb0000000800540069006d00650100000000000004500000000000000000000004ff0000052600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000526fc0200000017fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000002800000366000000d700fffffffb0000000a005600690065007700730100000394000001ba000000ad00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d00650072006100000001d1000000b50000000000000000fb0000000a0049006d00610067006502000001a2000001e1000000f8000000b5fb0000000a00640065007000740068000000031d000002310000001600fffffffb0000000a0049006d0061006700650100000415000000f80000000000000000fb0000000a0049006d00610067006501000003f4000001190000000000000000fb0000000a0064006500700074006800000004a2000000ac0000001600fffffffb0000000a0064006500700074006800000003b4000001b60000001600fffffffb0000000a0064006500700074006800000004b9000000950000001600fffffffb0000000a006400650070007400680000000481000000cd0000001600fffffffb0000000a006400650070007400680000000429000001250000001600fffffffb0000000a0064006500700074006800000003b7000000af0000001600fffffffb0000000a0064006500700074006800000003d5000000b50000001600fffffffb0000000a006400650070007400680000000444000001260000001600fffffffb0000000a00640065007000740068000000041f0000014b0000001600ffffff000000010000010f00000385fc0200000002fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000006100000003bfc0100000002fb0000000800540069006d00650000000000000006100000030000fffffffb0000000800540069006d00650100000000000004500000000000000000000003900000052600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -949,8 +1518,8 @@ Window Geometry:
   Tool Properties:
     collapsed: false
   Views:
-    collapsed: true
-  Width: 1279
+    collapsed: false
+  Width: 1280
   X: 2560
   Y: 24
   depth:
