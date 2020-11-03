@@ -25,21 +25,23 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	// ego 
-	// std::shared_ptr<EgoSwarmEvaluator> multiTrajEvaluatorBase_obj;
-	// multiTrajEvaluatorBase_obj.reset(new EgoSwarmEvaluator(nh, param));
-
-	// rnp
-	// std::shared_ptr<RbpSwarmEvaluator> multiTrajEvaluatorBase_obj;
-	// multiTrajEvaluatorBase_obj.reset(new RbpSwarmEvaluator(nh, param));
-
-	// dmpc
-	// std::shared_ptr<DmpcEvaluator> multiTrajEvaluatorBase_obj;
-	// multiTrajEvaluatorBase_obj.reset(new DmpcEvaluator(nh, param));
-
-	// dorca
-	std::shared_ptr<DorcaEvaluator> multiTrajEvaluatorBase_obj;
-	multiTrajEvaluatorBase_obj.reset(new DorcaEvaluator(nh, param));
+	if (param.planner_type == 0) {
+		// ego 
+		std::shared_ptr<EgoSwarmEvaluator> multiTrajEvaluatorBase_obj;
+		multiTrajEvaluatorBase_obj.reset(new EgoSwarmEvaluator(nh, param));
+	} else if (param.planner_type == 1) {
+		// rnp
+		std::shared_ptr<RbpSwarmEvaluator> multiTrajEvaluatorBase_obj;
+		multiTrajEvaluatorBase_obj.reset(new RbpSwarmEvaluator(nh, param));
+	} else if (param.planner_type == 2) {
+		// dmpc
+		std::shared_ptr<DmpcEvaluator> multiTrajEvaluatorBase_obj;
+		multiTrajEvaluatorBase_obj.reset(new DmpcEvaluator(nh, param));
+	} else {
+		// dorca
+		std::shared_ptr<DorcaEvaluator> multiTrajEvaluatorBase_obj;
+		multiTrajEvaluatorBase_obj.reset(new DorcaEvaluator(nh, param));		
+	}
 
 	ros::Rate rate(20);
 	while (ros::ok()) {
