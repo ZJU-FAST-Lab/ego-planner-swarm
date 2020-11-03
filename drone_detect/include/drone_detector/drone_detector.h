@@ -63,15 +63,20 @@ class DroneDetector
   void rcvDepthColorCamPoseCallback(const sensor_msgs::ImageConstPtr& depth_img, \
                                 const sensor_msgs::ImageConstPtr& color_img, \
                                 const geometry_msgs::PoseStampedConstPtr& camera_pose);
-  
+
   void rcvDepthCamPoseCallback(const sensor_msgs::ImageConstPtr& depth_img, \
                                 const geometry_msgs::PoseStampedConstPtr& camera_pose);
+  
+  void rcvMyOdomCallback(const nav_msgs::Odometry& odom);
+  void rcvDepthImgCallback(const sensor_msgs::ImageConstPtr& depth_img);
+
 
   void rcvDroneOdomCallbackBase(const nav_msgs::Odometry& odom, const int drone_id);
 
   void rcvDrone0OdomCallback(const nav_msgs::Odometry& odom);
   void rcvDrone1OdomCallback(const nav_msgs::Odometry& odom);
   void rcvDrone2OdomCallback(const nav_msgs::Odometry& odom);
+  void rcvDroneXOdomCallback(const nav_msgs::Odometry& odom);
   
   //! ROS node handle.
   ros::NodeHandle& nh_;
@@ -82,22 +87,25 @@ class DroneDetector
   typedef std::shared_ptr<message_filters::Synchronizer<SyncPolicyDepthColorImagePose>> SynchronizerDepthColorImagePose;
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, geometry_msgs::PoseStamped> SyncPolicyDepthImagePose;
   typedef std::shared_ptr<message_filters::Synchronizer<SyncPolicyDepthImagePose>> SynchronizerDepthImagePose;
-
-  std::shared_ptr<message_filters::Subscriber<sensor_msgs::Image>> depth_img_sub_;
+  
+  // std::shared_ptr<message_filters::Subscriber<sensor_msgs::Image>> depth_img_sub_;
   std::shared_ptr<message_filters::Subscriber<sensor_msgs::Image>> colordepth_img_sub_;
   std::shared_ptr<message_filters::Subscriber<geometry_msgs::PoseStamped>> camera_pos_sub_;
+
   SynchronizerDepthColorImagePose sync_depth_color_img_pose_;
   SynchronizerDepthImagePose sync_depth_img_pose_;
-  
   // other drones subscriber
-  ros::Subscriber drone0_odom_sub_, drone1_odom_sub_, drone2_odom_sub_;
+  ros::Subscriber drone0_odom_sub_, drone1_odom_sub_, drone2_odom_sub_, droneX_odom_sub_;
   std::string drone1_odom_topic_, drone2_odom_topic_;
 
+  ros::Subscriber my_odom_sub_, depth_img_sub_;
+  bool has_odom_;
+  nav_msgs::Odometry my_odom_;
   // ROS topic publisher
   // new_depth_img: erase the detected drones
   // new_colordepth_img: for debug
   ros::Publisher new_depth_img_pub_;
-  ros::Publisher new_colordepth_img_pub_;
+  ros::Publisher debug_depth_img_pub_;
 
   // parameters
   //camera param
@@ -111,7 +119,7 @@ class DroneDetector
   int pixel_threshold_;
 
   // for debug
-  bool debug_flag_;
+  bool debug_flag_, simulation_flag_;
   int debug_detect_result_[max_drone_num_];
   std::stringstream debug_img_text_[max_drone_num_];
   ros::Time debug_start_time_, debug_end_time_;
@@ -122,13 +130,15 @@ class DroneDetector
   int my_id_;
   cv::Mat depth_img_, color_img_;
 
+  Eigen::Matrix4d cam2body_;
   Eigen::Matrix4d cam2world_;
   Eigen::Quaterniond cam2world_quat_;
   Eigen::Vector4d my_pose_world_;
   Eigen::Quaterniond my_attitude_world_;
   Eigen::Vector4d my_last_pose_world_;
+  ros::Time my_last_odom_stamp_ = ros::TIME_MAX;
   ros::Time my_last_camera_stamp_ = ros::TIME_MAX;
-  
+
   Eigen::Matrix4d drone2world_[max_drone_num_];
   Eigen::Vector4d drone_pose_world_[max_drone_num_];
   Eigen::Quaterniond drone_attitude_world_[max_drone_num_];
