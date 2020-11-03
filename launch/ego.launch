@@ -1,0 +1,26 @@
+<launch>
+  <arg name="agent_num" value="8"/>
+  <arg name="debug_flag" value="false"/>
+  <arg name="planner_type" value="0"/>
+  <arg name="rect_obs_num" value="0"/>
+  <arg name="circle_obs_num" value="0"/>
+  <arg name="test_id" value="2"/>
+  <node pkg="rviz" name="rviz" type="rviz" args="-d $(find path_evaluation)/launch/demo.rviz" required="true"/>
+  <node pkg="path_evaluation" name="path_evaluation_node" type="path_evaluation_node" output="screen">
+    <!-- <param name="global_map_topic_name" name="/map_generator/global_cloud"> -->
+    <param name="odom_topic_name" value="/gazebo/model_states"/>
+    <param name="global_map_topic_name" value="/random_map_generator/all_map"/>
+    <param name="agent_num" value="$(arg agent_num)"/>
+    <param name="debug_flag" value="$(arg debug_flag)"/>
+    <param name="planner_type" value="$(arg planner_type)"/>
+    <param name="color/a" value="1.0"/>    
+    <param name="color/r" value="1.0"/>        
+    <param name="color/g" value="0.0"/>        
+    <param name="color/b" value="0.0"/>       
+    <param name="robot_scale" value="1.0"/>
+    <!-- <param name="result_fn"  value="$(find path_evaluation)/result/rbp/rbp_obs_$(arg rect_obs_num)_$(arg circle_obs_num)_$(arg test_id).txt" /> -->
+    <param name="result_fn" value="$(find path_evaluation)/result/dorca/dorca.txt"/>
+    <param name="trajectory_fn" value="$(find path_evaluation)/result/dmpc/trajectories1.txt"/>
+  </node>
+
+</launch>

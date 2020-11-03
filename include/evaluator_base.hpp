@@ -1,14 +1,11 @@
 /*
 * @Author: JC_Zhu
 * @Email:	jiangchaozhu@zju.edu.cn
-* @Create Date:	 2020-11-01 16:52:14
-* @Last Modified by:   JC Zhu
-* @Last Modified time: 2020-11-02 14:51:33
 */
 // c++ header
 
-#ifndef MULTI_TRAJ_EVALUATOT_HPP
-#define MULTI_TRAJ_EVALUATOT_HPP
+#ifndef EVALUATOT_BASE_HPP
+#define EVALUATOT_BASE_HPP
 #include <iostream>
 #include <fstream>
 #include "math.h"
@@ -33,7 +30,6 @@
 
 // user-defined header
 #include "param.hpp"
-#include "timer.hpp"
 
 // pcl header
 #include <pcl/kdtree/kdtree_flann.h>
@@ -43,11 +39,11 @@ using namespace std;
 using namespace arma;
 using namespace Eigen;
 
-namespace MultiTrajEvaluation {
-	class MultiTrajEvaluatorBase{
+namespace MultiPathEvaluation {
+	class EvaluatorBase{
 	public:
-		MultiTrajEvaluatorBase(const ros::NodeHandle &nh, const Param &param);
-		virtual ~MultiTrajEvaluatorBase(){}
+		EvaluatorBase(const ros::NodeHandle &nh, const Param &param);
+		virtual ~EvaluatorBase(){}
 		virtual void resultToFile() = 0;
 		void rcvGlobalPointCloudCallBack(const sensor_msgs::PointCloud2 &msg);
 		void getClosestDistToStaticObs(const nav_msgs::Path& path, const pcl::KdTreeFLANN<pcl::PointXYZ>& kd_tree, int agent_id);
@@ -57,7 +53,6 @@ namespace MultiTrajEvaluation {
 	protected:
 		ros::NodeHandle nh_;
 		Param param_;
-		Timer timer_;
 
 		// point cloud map in installed in kd-tree
 		pcl::KdTreeFLANN<pcl::PointXYZ> global_map_kdtree_;
@@ -93,7 +88,7 @@ namespace MultiTrajEvaluation {
 
 	};
 
-MultiTrajEvaluatorBase::MultiTrajEvaluatorBase(const ros::NodeHandle &nh, const Param &param) 
+EvaluatorBase::EvaluatorBase(const ros::NodeHandle &nh, const Param &param) 
 												: nh_(nh), param_(std::move(param)) {
 	ROS_WARN("In constructor");
 	// 1-d vector initialize
@@ -117,7 +112,7 @@ MultiTrajEvaluatorBase::MultiTrajEvaluatorBase(const ros::NodeHandle &nh, const 
 		min_dist_to_other_agent_2dvec_[i].resize(param_.agent_num);
 	}
 
-	global_map_sub_ = nh_.subscribe(param_.map_topic_name, 1, &MultiTrajEvaluatorBase::rcvGlobalPointCloudCallBack, this); 
+	global_map_sub_ = nh_.subscribe(param_.map_topic_name, 1, &EvaluatorBase::rcvGlobalPointCloudCallBack, this); 
 
 	global_min_dist_ = 10000;
 
@@ -130,7 +125,7 @@ MultiTrajEvaluatorBase::MultiTrajEvaluatorBase(const ros::NodeHandle &nh, const 
 	result_file_.open(param_.result_fn, ios::out);
 }
 
-void MultiTrajEvaluatorBase::rcvGlobalPointCloudCallBack(const sensor_msgs::PointCloud2 & pointcloud_map )
+void EvaluatorBase::rcvGlobalPointCloudCallBack(const sensor_msgs::PointCloud2 & pointcloud_map )
 {
 	if(has_global_map_)
 		return;
@@ -154,7 +149,7 @@ void MultiTrajEvaluatorBase::rcvGlobalPointCloudCallBack(const sensor_msgs::Poin
 	has_global_map_ = true;
 }
 
-void MultiTrajEvaluatorBase::getClosestDistToStaticObs(const nav_msgs::Path& path, const pcl::KdTreeFLANN<pcl::PointXYZ>& kd_tree, int agent_id)
+void EvaluatorBase::getClosestDistToStaticObs(const nav_msgs::Path& path, const pcl::KdTreeFLANN<pcl::PointXYZ>& kd_tree, int agent_id)
 {
   if (has_global_map_) {
     for(int i = 0; i < path.poses.size(); i++) {
@@ -170,7 +165,7 @@ void MultiTrajEvaluatorBase::getClosestDistToStaticObs(const nav_msgs::Path& pat
   }
 }
 
-void MultiTrajEvaluatorBase::getClosestDistToOtherDrones(const nav_msgs::Path& path1, const nav_msgs::Path& path2, int id1, int id2, double dist_tol)
+void EvaluatorBase::getClosestDistToOtherDrones(const nav_msgs::Path& path1, const nav_msgs::Path& path2, int id1, int id2, double dist_tol)
 {
   for (int i = 0; i < path1.poses.size(); i++) {
     double dist = getDist(path1.poses[i].pose, path2.poses[i].pose);
@@ -183,7 +178,7 @@ void MultiTrajEvaluatorBase::getClosestDistToOtherDrones(const nav_msgs::Path& p
   }
 }
 
-bool MultiTrajEvaluatorBase::CollisionDetect(const nav_msgs::Path& path1, const nav_msgs::Path& path2, double dist_tol)
+bool EvaluatorBase::CollisionDetect(const nav_msgs::Path& path1, const nav_msgs::Path& path2, double dist_tol)
 {
   double min_dist = 10000;
   for (int i = 0; i < path1.poses.size(); i++) {
@@ -201,7 +196,7 @@ bool MultiTrajEvaluatorBase::CollisionDetect(const nav_msgs::Path& path1, const 
     return false;
 }
 
-void MultiTrajEvaluatorBase::pathPublish()
+void EvaluatorBase::pathPublish()
 {
   for(int agent_id = 0; agent_id < param_.agent_num; agent_id++) {
     path_pub_vec_[agent_id].publish(path_msg_vec_[agent_id]);

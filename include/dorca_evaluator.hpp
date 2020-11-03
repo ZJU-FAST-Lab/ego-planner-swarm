@@ -5,15 +5,15 @@
 #ifndef DORCA_EVALUATOT_HPP
 #define DORCA_EVALUATOT_HPP
 
-#include "multi_traj_evaluator.hpp"
+#include "evaluator_base.hpp"
 #include "gazebo_msgs/ModelStates.h"
 
-namespace MultiTrajEvaluation {
-	class DorcaEvaluator : public MultiTrajEvaluatorBase
+namespace MultiPathEvaluation {
+	class DorcaEvaluator : public EvaluatorBase
 	{
 	public:
 		DorcaEvaluator(const ros::NodeHandle &nh, const Param &param)
-							: MultiTrajEvaluatorBase(nh, std::move(param)) {
+							: EvaluatorBase(nh, std::move(param)) {
 			ROS_WARN("in DorcaEvaluator constructor");
 
 			start_signal_sub_vec_.resize(param_.agent_num);

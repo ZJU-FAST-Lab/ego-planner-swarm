@@ -2,17 +2,17 @@
 * @Author: JC_Zhu
 * @Email:  jiangchaozhu@zju.edu.cn
 */
-#ifndef RBP_SWARM_EVALUATOT_HPP
-#define RBP_SWARM_EVALUATOT_HPP
+#ifndef RBP_EVALUATOT_HPP
+#define RBP_EVALUATOT_HPP
 
-#include "multi_traj_evaluator.hpp"
+#include "evaluator_base.hpp"
 
-namespace  MultiTrajEvaluation {
-	class RbpSwarmEvaluator : public MultiTrajEvaluatorBase
+namespace  MultiPathEvaluation {
+	class RbpSwarmEvaluator : public EvaluatorBase
 	{
 	public:
 		RbpSwarmEvaluator(const ros::NodeHandle &nh, const Param &param)
-							: MultiTrajEvaluatorBase(nh, std::move(param)) {
+							: EvaluatorBase(nh, std::move(param)) {
 		ROS_WARN("in RbpSwarmEvaluator constructor");
 
 		path_sub_vec_.resize(param_.agent_num);

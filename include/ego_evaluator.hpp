@@ -1,21 +1,18 @@
 /*
 * @Author: JC_Zhu
 * @Email:  jiangchaozhu@zju.edu.cn
-* @Create Date:   2020-11-02 13:50:30
-* @Last Modified by:   JC Zhu
-* @Last Modified time: 2020-11-02 14:54:21
 */
-#ifndef EGO_SWARM_EVALUATOT_HPP
-#define EGO_SWARM_EVALUATOT_HPP
+#ifndef EGO_EVALUATOT_HPP
+#define EGO_EVALUATOT_HPP
 
-#include "multi_traj_evaluator.hpp"
+#include "evaluator_base.hpp"
 
-namespace MultiTrajEvaluation {
-	class EgoSwarmEvaluator : public MultiTrajEvaluatorBase
+namespace MultiPathEvaluation {
+	class EgoSwarmEvaluator : public EvaluatorBase
 	{
 	public:
 		EgoSwarmEvaluator(const ros::NodeHandle &nh, const Param &param)
-							: MultiTrajEvaluatorBase(nh, std::move(param)) {
+							: EvaluatorBase(nh, std::move(param)) {
 		ROS_WARN("in EgoSwarmEvaluator constructor");
 
 		odom_sub_vec_.resize(param_.agent_num);

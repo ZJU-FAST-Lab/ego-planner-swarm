@@ -5,14 +5,14 @@
 #ifndef DMPC_SWAMR_EVALUATOT_HPP
 #define DMPC_SWAMR_EVALUATOT_HPP
 
-#include "multi_traj_evaluator.hpp"
+#include "evaluator_base.hpp"
 
-namespace MultiTrajEvaluation {
-	class DmpcEvaluator : public MultiTrajEvaluatorBase 
+namespace MultiPathEvaluation {
+	class DmpcEvaluator : public EvaluatorBase 
 	{
 	public:
 		DmpcEvaluator(const ros::NodeHandle &nh, const Param &param)
-					: MultiTrajEvaluatorBase(nh, std::move(param)) {
+					: EvaluatorBase(nh, std::move(param)) {
 			ROS_WARN("in DmpcEvaluator constructor");
 			// subscriber and publisher initialize
 			for (int i = 0; i < param_.agent_num; i++) {

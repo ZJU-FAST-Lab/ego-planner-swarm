@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>traj_evaluation</name>
+  <name>path_evaluation</name>
   <version>0.0.0</version>
-  <description>The traj_evaluation package</description>
+  <description>The path_evaluation package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

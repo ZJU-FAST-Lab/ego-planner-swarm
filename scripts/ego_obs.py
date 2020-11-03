@@ -18,7 +18,7 @@ def gen_launch_for_obs_test():
 	""" generate roslaunch file for ego_swarm in obs scenario
 
 	Args:
-		argv: user inputs from termial, argv[1] is used as agent num
+		argv: user inputs from termial, argv[1] is used as the number of agents
 
 
 	"""

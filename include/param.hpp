@@ -1,9 +1,6 @@
 /*
 * @Author: JC_Zhu
 * @Email:  jiangchaozhu@zju.edu.cn
-* @Create Date:   2020-11-01 16:55:09
-* @Last Modified by:   JC Zhu
-* @Last Modified time: 2020-11-02 13:24:24
 */
 #ifndef PARAM_HPP
 #define PARAM_HPP
@@ -12,7 +9,7 @@
 
 using namespace std;
 
-namespace MultiTrajEvaluation{
+namespace MultiPathEvaluation {
 	class Param {
 	public:
 		int agent_num;

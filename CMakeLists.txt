@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(traj_evaluation)
+project(path_evaluation)
 
 add_compile_options(-std=c++11)
 
@@ -24,7 +24,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}_node src/multi_traj_evaluation_node.cpp)
+add_executable(${PROJECT_NAME}_node src/multi_path_evaluation_node.cpp)
 
 target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
