@@ -1,0 +1,64 @@
+<!-- 
+	XXX.LAUNCH
+	Multi-agent Trajectory Planning and Simulation using Relative Bernstein Polynomial
+        
+	Usage: At terminal
+               ``` 
+               roslaunch package_name xxx.launch
+               ```
+
+	JC_Zhu
+	Fast Lab
+	Zhejiang University 
+	jiangchaozhu@zju.edu.cn
+-->
+<launch>
+	<arg name="agent_num" value="3"/>
+	<arg name="play_rate" value="1"/>
+	<arg name="play_time" value="0"/>
+	<node pkg="rviz" name="rviz" type="rviz" args="-d $(find path_evaluation)/launch/rviz.rviz" required="true"/>
+
+	<group ns="drone0">
+		<node pkg="rosbag" type="play" name="play" output="log" args="-r $(arg play_rate) -s $(arg play_time) $(find path_evaluation)/bag/drone0_new.bag">
+			<remap from="/vins_estimator/imu_propagate" to="odom"/>
+			<remap from="/drone_0_ego_planner_node/grid_map/occupancy" to="local_map"/>
+			<remap from="/vins_estimator/path" to="path"/>
+		</node>
+	</group>
+	<group ns="drone1">
+		<node pkg="rosbag" type="play" name="play" output="log" args="-r $(arg play_rate) -s $(arg play_time) $(find path_evaluation)/bag/drone1_new.bag">
+			<remap from="/vins_estimator/imu_propagate" to="odom"/>
+			<remap from="/drone_1_ego_planner_node/grid_map/occupancy" to="local_map"/>
+			<remap from="/vins_estimator/path" to="path"/>
+		</node>
+	</group>
+	<group ns="drone2">
+		<node pkg="rosbag" type="play" name="play" output="log" args="-r $(arg play_rate) -s $(arg play_time) $(find path_evaluation)/bag/drone2_new.bag">
+			<remap from="/vins_estimator/imu_propagate" to="odom"/>
+			<remap from="/drone_2_ego_planner_node/grid_map/occupancy" to="local_map"/>
+			<remap from="/vins_estimator/path" to="path"/>
+		</node>
+	</group>
+
+	<node pkg="path_evaluation" name="path_visualization_node" type="path_visualization_node" output="screen">
+		<param name="agent_num" value="$(arg agent_num)"/>
+	    <param name="color0/a" value="1.0"/>    
+	    <param name="color0/r" value="1.0"/>        
+	    <param name="color0/g" value="0.0"/>        
+	    <param name="color0/b" value="0.0"/> 
+
+	    <param name="color1/a" value="1.0"/>    
+	    <param name="color1/r" value="0.0"/>        
+	    <param name="color1/g" value="0.0"/>        
+	    <param name="color1/b" value="1.0"/> 
+
+	    <param name="color2/a" value="1.0"/>    
+	    <param name="color2/r" value="0.0"/>        
+	    <param name="color2/g" value="1.0"/>        
+	    <param name="color2/b" value="0.0"/>       
+	    <param name="robot_scale" value="0.8"/>
+
+	    <param name="stop_time" value="33"/>
+	</node>
+
+</launch>

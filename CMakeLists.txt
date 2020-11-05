@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   geometry_msgs
+  sensor_msgs
   rviz_visual_tools
 	)
 
@@ -33,3 +34,11 @@ target_link_libraries(${PROJECT_NAME}_node
    pose_utils
 )
 
+add_executable(path_visualization_node src/multi_path_visualization_node.cpp)
+
+target_link_libraries(path_visualization_node
+   ${catkin_LIBRARIES}
+   ${ARMADILLO_LIBRARIES}
+   ${PCL_LIBRARIES}
+   pose_utils
+)

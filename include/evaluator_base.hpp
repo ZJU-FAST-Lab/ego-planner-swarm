@@ -4,8 +4,8 @@
 */
 // c++ header
 
-#ifndef EVALUATOT_BASE_HPP
-#define EVALUATOT_BASE_HPP
+#ifndef EVALUATOR_BASE_HPP
+#define EVALUATOR_BASE_HPP
 #include <iostream>
 #include <fstream>
 #include "math.h"
