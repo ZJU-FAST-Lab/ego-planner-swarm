@@ -32,9 +32,9 @@ EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Clutte
 
 <p align = "center">
 <img src="pictures/title.gif" width = "413" height = "232" border="5" />
+<img src="pictures/outdoor.gif" width = "413" height = "232" border="5" />
 <img src="pictures/indoor1.gif" width = "413" height = "232" border="5" />
 <img src="pictures/indoor2.gif" width = "413" height = "232" border="5" />
-<img src="pictures/outdoor.gif" width = "413" height = "232" border="5" />
 </p>
 
 **Video Links:** [YouTube](https://youtu.be/UKoaGW7t7Dk), [bilibili](https://www.bilibili.com/video/BV1VC4y1t7F4/) (for Mainland China)
