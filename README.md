@@ -3,13 +3,13 @@ Compiling tests passed on ubuntu **16.04, 18.04 and 20.04** with ros installed.
 You can just execute the following commands one by one.
 ```
 sudo apt-get install libarmadillo-dev
-git clone https://github.com/ZJU-FAST-Lab/ego-planner.git
-cd ego-planner
+git clone https://github.com/ZJU-FAST-Lab/ego-planner-swarm.git
+cd ego-planner-swarm
 catkin_make
 source devel/setup.bash
 roslaunch ego_planner simple_run.launch
 ```
-If your network to github is slow, We recommend you to try the gitee repository [https://gitee.com/iszhouxin/ego-planner](https://gitee.com/iszhouxin/ego-planner). They synchronize automatically.
+If your network to github is slow, We recommend you to try the gitee repository [https://gitee.com/iszhouxin/ego-planner-swarm](https://gitee.com/iszhouxin/ego-planner-swarm). They synchronize automatically.
 
 If you find this work useful or interesting, please kindly give us a star :star:, thanks!:grinning:
 
@@ -23,10 +23,12 @@ It is a C++ head-only single file, which is lightweight and easy to use.
 
 - The hardware architecture is based on an open source implemation from [Teach-Repeat-Replan](https://github.com/HKUST-Aerial-Robotics/Teach-Repeat-Replan).
 
-# EGO-Planner 
-EGO-Planner: An ESDF-free Gradient-based Local Planner for Quadrotors
+- This work is an extension of [EGO-Planner](https://github.com/ZJU-FAST-Lab/ego-planner).
 
-**EGO-Planner** is a lightweight gradient-based local planner without ESDF construction, which significantly reduces computation time compared to some state-of-the-art methods <!--(EWOK and Fast-Planner)-->. The total planning time is only **around 1ms** and don't need to compute ESDF.
+# EGO-Swarm
+EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments
+
+**EGO-Swarm** is a decentralized and asynchronous systematic solution for multi-robot autonomous navigation in unknown obstacle-rich scenes using merely onboard resources.
 
 <p align = "center">
 <img src="pictures/title.gif" width = "413" height = "232" border="5" />
@@ -38,7 +40,7 @@ EGO-Planner: An ESDF-free Gradient-based Local Planner for Quadrotors
 **Video Links:** [YouTube](https://youtu.be/UKoaGW7t7Dk), [bilibili](https://www.bilibili.com/video/BV1VC4y1t7F4/) (for Mainland China)
 
 ## 1. Related Paper
-EGO-Planner: An ESDF-free Gradient-based Local Planner for Quadrotors, Xin Zhou, Zhepei Wang, Chao Xu and Fei Gao (Submitted to RA-L). [Preprint](https://arxiv.org/abs/2008.08835).
+EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments, Xin Zhou, Jiangchao Zhu, Hongyu Zhou, Chao Xu, and Fei Gao (Submitted to RA-L). [Preprint](XXX).
 
 ## 2. Standard Compilation
 
@@ -53,12 +55,12 @@ sudo apt-get install libarmadillo-dev
 
 From github,
 ```
-git clone https://github.com/bigsuperZZZX/ego-planner.git
+git clone https://github.com/bigsuperZZZX/ego-planner-swarm.git
 ```
 
 Or from gitee,
 ```
-git clone https://gitee.com/iszhouxin/ego-planner.git
+git clone https://gitee.com/iszhouxin/ego-planner-swarm.git
 ```
 
 **Step 3**. Compile,
@@ -78,7 +80,7 @@ roslaunch ego_planner rviz.launch
 In another terminal at the _ego-planner/_, run the planner in simulation by
 ```
 source devel/setup.bash
-roslaunch ego_planner run_in_sim.launch
+roslaunch ego_planner swarm.launch
 ```
 
 Then you can follow the gif below to control the drone.
@@ -140,7 +142,17 @@ Don't forget to re-compile the code!
 
 For installation of CUDA, please go to [CUDA ToolKit](https://developer.nvidia.com/cuda-toolkit)
 
-## 5. Utilize the Full Performance of CPU
+## 5. Use Drone Simulation Considering Dynamics or Not
+Typical simulations use a dynamic model to calculate the motion of the drone under given commands.
+However, it requires continous iterations to solver a differential equation, which consumes quite a lot computation.
+When launching a swarm of drones, this computation burden may cause significant lag.
+On an i7 9700KF CPU I use, 15 drones are the upper limit.
+Therefore, for compatibility and scalability purposes, I use a "[fake_drone]()" package to convet commands to drone odometry directly by default.
+
+If you want to use a more realistic quadrotor model, you can un-comment the node `quadrotor_simulator_so3` and `so3_control/SO3ControlNodelet` in [simulator.xml](XXX) to enable quadrotor simulation considering dynamics.
+Please don't forget to comment the package `poscmd_2_odom` right after the above two nodes.
+
+## 6. Utilize the Full Performance of CPU
 The computation time of our planner is too short for the OS to increase CPU frequency, which makes the computation time tend to be longer and unstable.
 
 Therefore, we recommend you to manually set the CPU frequency to the maximum.

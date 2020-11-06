@@ -3,15 +3,7 @@
 #include <random>
 #include <eigen3/Eigen/Dense>
 #include <ros/ros.h>
-// #include <ros/console.h>
 #include <nav_msgs/Odometry.h>
-// #include <nav_msgs/Path.h>
-// #include <geometry_msgs/PoseStamped.h>
-// #include <visualization_msgs/MarkerArray.h>
-// #include <visualization_msgs/Marker.h>
-// #include <tf/tf.h>
-// #include <tf/transform_datatypes.h>
-// #include <tf/transform_broadcaster.h>
 #include "quadrotor_msgs/PositionCommand.h"
 
 ros::Subscriber _cmd_sub;

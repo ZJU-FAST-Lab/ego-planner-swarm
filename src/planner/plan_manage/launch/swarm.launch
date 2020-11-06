@@ -19,7 +19,7 @@
         <param name="ObstacleShape/lower_hei" value="0.0"/>
         <param name="ObstacleShape/upper_hei" value="3.0"/>        
 
-        <param name="map/circle_num" value="100"/>        
+        <param name="map/circle_num" value="200"/>        
         <param name="ObstacleShape/radius_l" value="0.7"/>        
         <param name="ObstacleShape/radius_h" value="0.5"/>        
         <param name="ObstacleShape/z_l" value="0.7"/>        

@@ -16,8 +16,6 @@
 
   <![CDATA[node pkg ="map_generator" name ="random_forest" type ="random_forest" output = "screen">    
     <remap from="~odometry"   to="$(arg odometry_topic)"/>    
-    <param name="init_state_x"   value="$(arg init_x_)"/>
-    <param name="init_state_y"   value="$(arg init_y_)"/>
     <param name="map/x_size"     value="$(arg map_size_x_)" />
     <param name="map/y_size"     value="$(arg map_size_y_)" />
     <param name="map/z_size"     value="$(arg map_size_z_)" />
@@ -74,6 +72,7 @@
       <param name="attenuation"   type="double" value="0.1"/>
   </node]]>
 
+  
   <!-- <node pkg="so3_quadrotor_simulator" type="quadrotor_simulator_so3" name="drone_$(arg drone_id)_quadrotor_simulator_so3" output="screen">
         <param name="rate/odom" value="200.0"/>
         <param name="simulator/init_state_x" value="$(arg init_x_)"/>

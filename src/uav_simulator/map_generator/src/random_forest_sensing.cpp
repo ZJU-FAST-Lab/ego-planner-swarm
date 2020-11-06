@@ -23,7 +23,7 @@ vector<int> pointIdxRadiusSearch;
 vector<float> pointRadiusSquaredDistance;
 
 random_device rd;
-//default_random_engine eng(0);
+// default_random_engine eng(4);
 default_random_engine eng(rd()); 
 uniform_real_distribution<double> rand_x;
 uniform_real_distribution<double> rand_y;
@@ -81,16 +81,6 @@ void RandomMapGenerate() {
     y = rand_y(eng);
     w = rand_w(eng);
 
-    if (sqrt(pow(x - _init_x, 2) + pow(y - _init_y, 2)) < 2.0) {
-      i--;
-      continue;
-    }
-
-    if (sqrt(pow(x - 19.0, 2) + pow(y - 0.0, 2)) < 2.0) {
-      i--;
-      continue;
-    }
-
     x = floor(x / _resolution) * _resolution + _resolution / 2.0;
     y = floor(y / _resolution) * _resolution + _resolution / 2.0;
 
@@ -115,16 +105,6 @@ void RandomMapGenerate() {
     x = rand_x(eng);
     y = rand_y(eng);
     z = rand_z_(eng);
-
-    if (sqrt(pow(x - _init_x, 2) + pow(y - _init_y, 2)) < 2.0) {
-      i--;
-      continue;
-    }
-
-    if (sqrt(pow(x - 19.0, 2) + pow(y - 0.0, 2)) < 2.0) {
-      i--;
-      continue;
-    }
 
     x = floor(x / _resolution) * _resolution + _resolution / 2.0;
     y = floor(y / _resolution) * _resolution + _resolution / 2.0;
@@ -197,16 +177,6 @@ void RandomMapGenerateCylinder() {
     y = rand_y(eng);
     w = rand_w(eng);
     inf = rand_inf(eng);
-
-    if (sqrt(pow(x - _init_x, 2) + pow(y - _init_y, 2)) < 2.0) {
-      i--;
-      continue;
-    }
-
-    if (sqrt(pow(x - 19.0, 2) + pow(y - 0.0, 2)) < 2.0) {
-      i--;
-      continue;
-    }
     
     bool flag_continue = false;
     for ( auto p : obs_position )
@@ -231,7 +201,7 @@ void RandomMapGenerateCylinder() {
       for (int s = -widNum / 2.0; s < widNum / 2.0; s++) {
         h = rand_h(eng);
         int heiNum = ceil(h / _resolution);
-        for (int t = -30; t < heiNum; t++) {
+        for (int t = -20; t < heiNum; t++) {
           double temp_x = x + (r + 0.5) * _resolution + 1e-2;
           double temp_y = y + (s + 0.5) * _resolution + 1e-2;
           double temp_z = (t + 0.5) * _resolution + 1e-2;
@@ -252,16 +222,6 @@ void RandomMapGenerateCylinder() {
     x = rand_x(eng);
     y = rand_y(eng);
     z = rand_z_(eng);
-
-    if (sqrt(pow(x - _init_x, 2) + pow(y - _init_y, 2)) < 2.0) {
-      i--;
-      continue;
-    }
-
-    if (sqrt(pow(x - 19.0, 2) + pow(y - 0.0, 2)) < 2.0) {
-      i--;
-      continue;
-    }
 
     x = floor(x / _resolution) * _resolution + _resolution / 2.0;
     y = floor(y / _resolution) * _resolution + _resolution / 2.0;

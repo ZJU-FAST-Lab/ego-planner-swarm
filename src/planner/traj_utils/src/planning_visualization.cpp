@@ -43,10 +43,10 @@ namespace ego_planner
       pt.x = list[i](0);
       pt.y = list[i](1);
       pt.z = list[i](2);
-      if (show_sphere) sphere.points.push_back(pt);
+      //if (show_sphere) sphere.points.push_back(pt);
       line_strip.points.push_back(pt);
     }
-    if (show_sphere) pub.publish(sphere);
+    //if (show_sphere) pub.publish(sphere);
     pub.publish(line_strip);
   }
 
