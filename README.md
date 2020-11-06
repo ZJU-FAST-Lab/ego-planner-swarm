@@ -86,7 +86,7 @@ roslaunch ego_planner swarm.launch
 Then you can follow the gif below to control the drone.
 
 <p align = "center">
-<img src="pictures/sim_demo.gif" width = "640" height = "438" border="5" />
+<img src="pictures/sim_demo.gif" width = "640" height = "360" border="5" />
 </p>
 
 ## 3. Using an IDE
