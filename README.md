@@ -9,7 +9,7 @@ catkin_make
 source devel/setup.bash
 roslaunch ego_planner simple_run.launch
 ```
-If your network to github is slow, We recommend you to try the gitee repository [https://gitee.com/iszhouxin/ego-planner-swarm](https://gitee.com/iszhouxin/ego-planner-swarm). They synchronize automatically.
+<!If your network to github is slow, We recommend you to try the gitee repository [https://gitee.com/iszhouxin/ego-planner-swarm](https://gitee.com/iszhouxin/ego-planner-swarm). They synchronize automatically./>
 
 If you find this work useful or interesting, please kindly give us a star :star:, thanks!:grinning:
 
@@ -37,10 +37,10 @@ EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Clutte
 <img src="pictures/indoor2.gif" width = "413" height = "232" border="5" />
 </p>
 
-**Video Links:** [YouTube](https://youtu.be/UKoaGW7t7Dk), [bilibili](https://www.bilibili.com/video/BV1VC4y1t7F4/) (for Mainland China)
+**Video Links:** [YouTube](https://www.youtube.com/watch?v=K5WKg8meb94&ab_channel=FeiGao), [bilibili](https://www.bilibili.com/video/BV1Nt4y1e7KD) (for Mainland China)
 
 ## 1. Related Paper
-EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments, Xin Zhou, Jiangchao Zhu, Hongyu Zhou, Chao Xu, and Fei Gao (Submitted to RA-L). [Preprint](XXX).
+EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments, Xin Zhou, Jiangchao Zhu, Hongyu Zhou, Chao Xu, and Fei Gao (Submitted to RA-L). [Preprint](https://arxiv.org/abs/2011.04183v1).
 
 ## 2. Standard Compilation
 
@@ -58,10 +58,11 @@ From github,
 git clone https://github.com/bigsuperZZZX/ego-planner-swarm.git
 ```
 
-Or from gitee,
+<!Or from gitee,
 ```
 git clone https://gitee.com/iszhouxin/ego-planner-swarm.git
 ```
+/>
 
 **Step 3**. Compile,
 ```
@@ -71,13 +72,13 @@ catkin_make -DCMAKE_BUILD_TYPE=Release
 
 **Step 4**. Run.
 
-In a terminal at the _ego-planner/_ folder, open the rviz for visuallization and interactions
+In a terminal at the _ego-planner-swarm/_ folder, open the rviz for visuallization and interactions
 ```
 source devel/setup.bash
 roslaunch ego_planner rviz.launch
 ```
 
-In another terminal at the _ego-planner/_, run the planner in simulation by
+In another terminal at the _ego-planner-swarm/_, run the planner in simulation by
 ```
 source devel/setup.bash
 roslaunch ego_planner swarm.launch
@@ -147,9 +148,9 @@ Typical simulations use a dynamic model to calculate the motion of the drone und
 However, it requires continous iterations to solver a differential equation, which consumes quite a lot computation.
 When launching a swarm of drones, this computation burden may cause significant lag.
 On an i7 9700KF CPU I use, 15 drones are the upper limit.
-Therefore, for compatibility and scalability purposes, I use a "[fake_drone]()" package to convet commands to drone odometry directly by default.
+Therefore, for compatibility and scalability purposes, I use a "[fake_drone](https://github.com/ZJU-FAST-Lab/ego-planner-swarm/tree/master/src/uav_simulator/fake_drone)" package to convet commands to drone odometry directly by default.
 
-If you want to use a more realistic quadrotor model, you can un-comment the node `quadrotor_simulator_so3` and `so3_control/SO3ControlNodelet` in [simulator.xml](XXX) to enable quadrotor simulation considering dynamics.
+If you want to use a more realistic quadrotor model, you can un-comment the node `quadrotor_simulator_so3` and `so3_control/SO3ControlNodelet` in [simulator.xml](https://github.com/ZJU-FAST-Lab/ego-planner-swarm/blob/master/src/planner/plan_manage/launch/simulator.xml) to enable quadrotor simulation considering dynamics.
 Please don't forget to comment the package `poscmd_2_odom` right after the above two nodes.
 
 ## 6. Utilize the Full Performance of CPU
@@ -168,6 +169,7 @@ More information can be found in [http://www.thinkwiki.org/wiki/How_to_use_cpufr
 
 Note that CPU frequency may still decrease due to high temperature in high load.
 
+<!--
 # Improved ROS-RealSense Driver
 
 We modified the ros-relasense driver to enable the laser emitter strobe every other frame, allowing the device to output high quality depth images with the help of emitter, and along with binocular images free from laser interference.
@@ -226,19 +228,7 @@ If everything looks well, you can now compile the ros-realsense package named _m
 roslaunch realsense_camera rs_camera.launch
 ```
 Then you will receive depth stream along with binocular stream together at 30Hz by default.
-
-<!--
-# A Lightweight Quadrotor Simulator
-
-The quadrotor simulator we use is inherited and modified from [Fast-Planner](https://github.com/HKUST-Aerial-Robotics/Fast-Planner). 
-It is lightweight and super easy to use.
-Only one topic is required to control the drone.
-You can execute 
-```
-roslaunch so3_quadrotor_simulator simulator_example.launch 
-```
-to run a simple example in ego-planner/src/uav_simulator/so3/control/src/control_example.cpp.
-If this simulator is helpful to you, plaease kindly give a star to [Fast-Planner](https://github.com/HKUST-Aerial-Robotics/Fast-Planner) as well.-->
+-->
 
 # Licence
 The source code is released under [GPLv3](http://www.gnu.org/licenses/) license.
