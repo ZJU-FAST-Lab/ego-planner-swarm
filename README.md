@@ -40,7 +40,7 @@ EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Clutte
 **Video Links:** [YouTube](https://www.youtube.com/watch?v=K5WKg8meb94&ab_channel=FeiGao), [bilibili](https://www.bilibili.com/video/BV1Nt4y1e7KD) (for Mainland China)
 
 ## 1. Related Paper
-EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments, Xin Zhou, Jiangchao Zhu, Hongyu Zhou, Chao Xu, and Fei Gao (Submitted to RA-L). [Preprint](https://arxiv.org/abs/2011.04183v1).
+EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments, Xin Zhou, Jiangchao Zhu, Hongyu Zhou, Chao Xu, and Fei Gao (Submitted to ICRA2021). [Preprint](https://arxiv.org/abs/2011.04183v1).
 
 ## 2. Standard Compilation
 
