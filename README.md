@@ -47,14 +47,14 @@ sudo apt-get install libarmadillo-dev
 
 From github,
 ```
-git clone https://github.com/bigsuperZZZX/ego-planner-swarm.git
+git clone https://github.com/ZJU-FAST-Lab/ego-planner-swarm.git
 ```
 
-<!Or from gitee,
+<!--Or from gitee,
 ```
 git clone https://gitee.com/iszhouxin/ego-planner-swarm.git
 ```
-/>
+/-->
 
 **Step 3**. Compile,
 ```
