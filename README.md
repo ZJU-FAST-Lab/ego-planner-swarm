@@ -98,7 +98,7 @@ It will export a compile commands file, which can help vscode to determine the c
 
 **Step 3**. Launch vscode and select the _ego-planner_ folder to open.
 ```
-code ~/<......>/ego-planner/
+code ~/<......>/ego-planner-swarm/
 ```
 
 Press **Ctrl+Shift+B** in vscode to compile the code. This command is defined in _.vscode/tasks.json_.
