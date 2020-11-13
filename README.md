@@ -14,16 +14,8 @@ roslaunch ego_planner simple_run.launch
 If you find this work useful or interesting, please kindly give us a star :star:, thanks!:grinning:
 
 # Acknowledgements
-- The framework of this repository is based on [Fast-Planner](https://github.com/HKUST-Aerial-Robotics/Fast-Planner) by Zhou Boyu who achieves impressive proformance on quaorotor local planning.
 
-- The L-BFGS solver we use is from [LBFGS-Lite](https://github.com/ZJU-FAST-Lab/LBFGS-Lite). 
-It is a C++ head-only single file, which is lightweight and easy to use.
-
-- The map generated in simulation is from [mockamap](https://github.com/HKUST-Aerial-Robotics/mockamap) by William Wu.
-
-- The hardware architecture is based on an open source implemation from [Teach-Repeat-Replan](https://github.com/HKUST-Aerial-Robotics/Teach-Repeat-Replan).
-
-- This work is an extension of [EGO-Planner](https://github.com/ZJU-FAST-Lab/ego-planner).
+- This work extends [EGO-Planner](https://github.com/ZJU-FAST-Lab/ego-planner) to swarm navigation.
 
 # EGO-Swarm
 EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments
@@ -40,7 +32,7 @@ EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Clutte
 **Video Links:** [YouTube](https://www.youtube.com/watch?v=K5WKg8meb94&ab_channel=FeiGao), [bilibili](https://www.bilibili.com/video/BV1Nt4y1e7KD) (for Mainland China)
 
 ## 1. Related Paper
-EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments, Xin Zhou, Jiangchao Zhu, Hongyu Zhou, Chao Xu, and Fei Gao (Submitted to RA-L). [Preprint](https://arxiv.org/abs/2011.04183v1).
+EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments, Xin Zhou, Jiangchao Zhu, Hongyu Zhou, Chao Xu, and Fei Gao (Submitted to ICRA2021). [Preprint](https://arxiv.org/abs/2011.04183v1).
 
 ## 2. Standard Compilation
 
@@ -55,14 +47,14 @@ sudo apt-get install libarmadillo-dev
 
 From github,
 ```
-git clone https://github.com/bigsuperZZZX/ego-planner-swarm.git
+git clone https://github.com/ZJU-FAST-Lab/ego-planner-swarm.git
 ```
 
-<!Or from gitee,
+<!--Or from gitee,
 ```
 git clone https://gitee.com/iszhouxin/ego-planner-swarm.git
 ```
-/>
+/-->
 
 **Step 3**. Compile,
 ```
@@ -106,7 +98,7 @@ It will export a compile commands file, which can help vscode to determine the c
 
 **Step 3**. Launch vscode and select the _ego-planner_ folder to open.
 ```
-code ~/<......>/ego-planner/
+code ~/<......>/ego-planner-swarm/
 ```
 
 Press **Ctrl+Shift+B** in vscode to compile the code. This command is defined in _.vscode/tasks.json_.
