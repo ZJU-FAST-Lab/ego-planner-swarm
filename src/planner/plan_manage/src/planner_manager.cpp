@@ -1,7 +1,7 @@
 // #include <fstream>
 #include <plan_manage/planner_manager.h>
 #include <thread>
-#include "visualization_msgs/Marker.h" // fuck
+#include "visualization_msgs/Marker.h" // zx-todo
 
 namespace ego_planner
 {
@@ -31,7 +31,7 @@ namespace ego_planner
 
     // obj_predictor_.reset(new fast_planner::ObjPredictor(nh));
     // obj_predictor_->init();
-    // obj_pub_ = nh.advertise<visualization_msgs::Marker>("/dynamic/obj_prdi", 10); // fuck
+    // obj_pub_ = nh.advertise<visualization_msgs::Marker>("/dynamic/obj_prdi", 10); // zx-todo
 
     bspline_optimizer_.reset(new BsplineOptimizer);
     bspline_optimizer_->setParam(nh);

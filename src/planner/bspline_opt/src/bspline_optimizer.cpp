@@ -375,7 +375,7 @@ namespace ego_planner
         }
         else if (cp_id >= segments[seg_id].first && cp_id <= segments[seg_id].second)
         {
-          if (!selection[seg_id]) // FUCK
+          if (!selection[seg_id]) // zx-todo
           {
             cpsOneSample.points.col(cp_id) = RichInfoSegs[seg_id].first.points.col(cp_of_seg_id);
             cpsOneSample.base_point[cp_id] = RichInfoSegs[seg_id].first.base_point[cp_of_seg_id];
@@ -1130,7 +1130,7 @@ namespace ego_planner
       {
         if (vi(j) > max_vel_)
         {
-          // cout << "fuck VEL" << endl;
+          // cout << "zx-todo VEL" << endl;
           // cout << vi(j) << endl;
           cost += pow(vi(j) - max_vel_, 2) * ts_inv2; // multiply ts_inv3 to make vel and acc has similar magnitude
 
@@ -1161,7 +1161,7 @@ namespace ego_planner
       {
         if (ai(j) > max_acc_)
         {
-          // cout << "fuck ACC" << endl;
+          // cout << "zx-todo ACC" << endl;
           // cout << ai(j) << endl;
           cost += pow(ai(j) - max_acc_, 2);
 

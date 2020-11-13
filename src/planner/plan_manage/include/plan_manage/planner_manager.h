@@ -58,7 +58,7 @@ namespace ego_planner
     /* main planning algorithms & modules */
     PlanningVisualization::Ptr visualization_;
 
-    // ros::Publisher obj_pub_; //fuck 
+    // ros::Publisher obj_pub_; //zx-todo 
 
     BsplineOptimizer::Ptr bspline_optimizer_;
 
