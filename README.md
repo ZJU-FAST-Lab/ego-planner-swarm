@@ -5,7 +5,7 @@ You can just execute the following commands one by one.
 sudo apt-get install libarmadillo-dev
 git clone https://github.com/ZJU-FAST-Lab/ego-planner-swarm.git
 cd ego-planner-swarm
-catkin_make
+catkin_make -j1
 source devel/setup.bash
 roslaunch ego_planner simple_run.launch
 ```
@@ -59,7 +59,7 @@ git clone https://gitee.com/iszhouxin/ego-planner-swarm.git
 **Step 3**. Compile,
 ```
 cd ego-planner
-catkin_make -DCMAKE_BUILD_TYPE=Release
+catkin_make -DCMAKE_BUILD_TYPE=Release -j1
 ```
 
 **Step 4**. Run.
