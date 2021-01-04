@@ -77,7 +77,7 @@ inline double DroneDetector::getDist2(const Eigen::Vector4d &p1, const Eigen::Ve
     return delta_x*delta_x+delta_y*delta_y+delta_z*delta_z;
 }
 
-inline Eigen::Vector4d DroneDetector::depth2Pos(int u, int v, float depth) 
+inline Eigen::Vector4d DroneDetector::pixel2Pos(int u, int v, float depth) 
 {
   Eigen::Vector4d pose_in_camera;
   pose_in_camera(0) = (u - cx_) * depth / fx_;
@@ -87,7 +87,7 @@ inline Eigen::Vector4d DroneDetector::depth2Pos(int u, int v, float depth)
   return pose_in_camera;
 }
 
-inline Eigen::Vector4d DroneDetector::depth2Pos(const Eigen::Vector2i &pixel, float depth) 
+inline Eigen::Vector4d DroneDetector::pixel2Pos(const Eigen::Vector2i &pixel, float depth) 
 {
   Eigen::Vector4d pose_in_camera;
   pose_in_camera(0) = (pixel(0) - cx_) * depth / fx_;
@@ -97,7 +97,7 @@ inline Eigen::Vector4d DroneDetector::depth2Pos(const Eigen::Vector2i &pixel, fl
   return pose_in_camera;
 }
 
-inline Eigen::Vector2i DroneDetector::pos2Depth(const Eigen::Vector4d &pose_in_camera) 
+inline Eigen::Vector2i DroneDetector::pos2Pixel(const Eigen::Vector4d &pose_in_camera) 
 {
   float depth = pose_in_camera(2);
   Eigen::Vector2i pixel;
@@ -224,7 +224,7 @@ void DroneDetector::rcvDroneOdomCallbackBase(const nav_msgs::Odometry& odom, int
   drone2world(2,3) = drone_pose_world_[drone_id](2);
 
   drone_pose_cam_[drone_id] = cam2world_.inverse() * drone_pose_world_[drone_id];
-  drone_ref_pixel_[drone_id] = pos2Depth(drone_pose_cam_[drone_id]);
+  drone_ref_pixel_[drone_id] = pos2Pixel(drone_pose_cam_[drone_id]);
   // if the other drone is in front of me and it is in my fov
   if (drone_pose_cam_[drone_id](2) > 0 && isInSensorRange(drone_ref_pixel_[drone_id])) {
     in_depth_[drone_id] = true;
@@ -304,7 +304,7 @@ bool DroneDetector::countPixel(int drone_id, Eigen::Vector2i &true_pixel, Eigen:
       }
 
       // get tmp_pose in cam frame
-      tmp_pose_cam = depth2Pos(tmp_pixel(0), tmp_pixel(1), depth);
+      tmp_pose_cam = pixel2Pos(tmp_pixel(0), tmp_pixel(1), depth);
       double dist2 = getDist2(tmp_pose_cam, drone_pose_cam_[drone_id]);
       // ROS_WARN("dist2 = %lf", dist2);
       if (dist2 < max_pose_error2_) {
@@ -334,7 +334,7 @@ bool DroneDetector::countPixel(int drone_id, Eigen::Vector2i &true_pixel, Eigen:
       depth = depth_img_.at<float>(init_y, init_x); 
     }
 
-    tmp_pose_cam = depth2Pos(init_x, init_y, depth);
+    tmp_pose_cam = pixel2Pos(init_x, init_y, depth);
     if (getDist2(tmp_pose_cam, drone_pose_cam_[drone_id]) < max_pose_error2_){
       true_pixel(0) = init_x;
       true_pixel(1) = init_y;
@@ -350,7 +350,7 @@ bool DroneDetector::countPixel(int drone_id, Eigen::Vector2i &true_pixel, Eigen:
             } else {
               depth = depth_img_.at<float>(init_y, init_x); 
             }
-            tmp_pose_cam = depth2Pos(init_x, init_y, depth);
+            tmp_pose_cam = pixel2Pos(init_x, init_y, depth);
             if (getDist2(tmp_pose_cam, drone_pose_cam_[drone_id]) < max_pose_error2_) {
               true_pixel(0) = init_x;
               true_pixel(1) = init_y;
@@ -369,7 +369,7 @@ bool DroneDetector::countPixel(int drone_id, Eigen::Vector2i &true_pixel, Eigen:
             } else {
               depth = depth_img_.at<float>(init_y, init_x); 
             }
-            tmp_pose_cam = depth2Pos(init_x, init_y, depth);
+            tmp_pose_cam = pixel2Pos(init_x, init_y, depth);
             if (getDist2(tmp_pose_cam, drone_pose_cam_[drone_id]) < max_pose_error2_){
               true_pixel(0) = init_x;
               true_pixel(1) = init_y;
@@ -390,7 +390,7 @@ bool DroneDetector::countPixel(int drone_id, Eigen::Vector2i &true_pixel, Eigen:
         } else {
           depth = depth_img_.at<float>(init_y, init_x); 
         }
-        tmp_pose_cam = depth2Pos(init_x, init_y, depth);
+        tmp_pose_cam = pixel2Pos(init_x, init_y, depth);
         if (getDist2(tmp_pose_cam, drone_pose_cam_[drone_id]) < max_pose_error2_){
           true_pixel(0) = init_x;
           true_pixel(1) = init_y;

@@ -51,9 +51,9 @@ class DroneDetector
   // inline functions
   double getDist2(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2);
   double getDist2(const Eigen::Vector4d &p1, const Eigen::Vector4d &p2);
-  Eigen::Vector4d depth2Pos(int u, int v, float depth);
-  Eigen::Vector4d depth2Pos(const Eigen::Vector2i &pixel, float depth) ;
-  Eigen::Vector2i pos2Depth(const Eigen::Vector4d &pose_in_camera) ;
+  Eigen::Vector4d pixel2Pos(int u, int v, float depth);
+  Eigen::Vector4d pixel2Pos(const Eigen::Vector2i &pixel, float depth) ;
+  Eigen::Vector2i pos2Pixel(const Eigen::Vector4d &pose_in_camera) ;
   bool isInSensorRange(const Eigen::Vector2i &pixel);
 
   bool countPixel(int drone_id, Eigen::Vector2i &true_pixel, Eigen::Vector4d &true_pose_cam);
