@@ -66,7 +66,7 @@ namespace ego_planner
     else if (target_type_ == TARGET_TYPE::PRESET_TARGET)
     {
       trigger_sub_ = nh.subscribe("/traj_start_trigger", 1, &EGOReplanFSM::triggerCallback, this);
-      ros::Duration(1.0).sleep();
+      // ros::Duration(1.0).sleep();
       ROS_WARN("Waiting for trigger from [n3ctrl] from RC");
       while (ros::ok() && (!have_odom_ || !have_trigger_))
       {
@@ -436,7 +436,7 @@ namespace ego_planner
       {
         if (have_odom_ && have_target_)
         {
-          bool success = planFromGlobalTraj(10); // fuck
+          bool success = planFromGlobalTraj(10); // zx-todo
           if (success)
           {
             changeFSMExecState(EXEC_TRAJ, "FSM");
@@ -465,7 +465,7 @@ namespace ego_planner
       // start_yaw_(0)         = atan2(rot_x(1), rot_x(0));
       // start_yaw_(1) = start_yaw_(2) = 0.0;
 
-      bool success = planFromGlobalTraj(10); // fuck
+      bool success = planFromGlobalTraj(10); // zx-todo
       if (success)
       {
         changeFSMExecState(EXEC_TRAJ, "FSM");
@@ -550,7 +550,7 @@ namespace ego_planner
     data_disp_pub_.publish(data_disp_);
   }
 
-  bool EGOReplanFSM::planFromGlobalTraj(const int trial_times /*=1*/) //fuck
+  bool EGOReplanFSM::planFromGlobalTraj(const int trial_times /*=1*/) //zx-todo
   {
     start_pt_ = odom_pos_;
     start_vel_ = odom_vel_;
@@ -770,7 +770,7 @@ namespace ego_planner
 
     if ( startup_pub )
     {
-      multi_bspline_msgs_buf_.drone_id_from = planner_manager_->pp_.drone_id; // fuck
+      multi_bspline_msgs_buf_.drone_id_from = planner_manager_->pp_.drone_id; // zx-todo
       if ((int)multi_bspline_msgs_buf_.traj.size() == planner_manager_->pp_.drone_id + 1)
       {
         multi_bspline_msgs_buf_.traj.back() = bspline;
