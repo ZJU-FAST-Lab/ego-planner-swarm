@@ -258,6 +258,10 @@ namespace ego_planner
           }
           vis_trajs.push_back(point_set);
         }
+        else
+        {
+          cout << "traj " << trajs.size() - i << " failed." << endl;
+        }
       }
 
       t_opt = ros::Time::now() - t_start;
