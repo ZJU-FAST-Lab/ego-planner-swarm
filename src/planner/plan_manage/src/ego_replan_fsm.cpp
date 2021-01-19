@@ -396,6 +396,7 @@ namespace ego_planner
 
   void EGOReplanFSM::execFSMCallback(const ros::TimerEvent &e)
   {
+    exec_timer_.stop();  // To avoid blockage
 
     static int fsm_num = 0;
     fsm_num++;
@@ -415,7 +416,8 @@ namespace ego_planner
     {
       if (!have_odom_ )
       {
-        return;
+        goto force_return;
+        // return;
       }
       changeFSMExecState(WAIT_TARGET, "FSM");
       break;
@@ -424,7 +426,8 @@ namespace ego_planner
     case WAIT_TARGET:
     {
       if (!have_target_)
-        return;
+        goto force_return;
+        // return;
       else
       {
         // if ( planner_manager_->pp_.drone_id <= 0 )
@@ -523,7 +526,8 @@ namespace ego_planner
           have_target_ = false;
 
           changeFSMExecState(WAIT_TARGET, "FSM");
-          return;
+          goto force_return;
+          // return;
         }
         else if ((end_pt_ - pos).norm() > no_replan_thresh_ && t_cur > replan_thresh_)
         {
@@ -558,6 +562,9 @@ namespace ego_planner
 
     data_disp_.header.stamp = ros::Time::now();
     data_disp_pub_.publish(data_disp_);
+
+    force_return:;
+    exec_timer_.start();
   }
 
   bool EGOReplanFSM::planFromGlobalTraj(const int trial_times /*=1*/) //zx-todo
