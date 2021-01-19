@@ -230,7 +230,7 @@ namespace ego_planner
 
     if (pp_.use_distinctive_trajs)
     {
-      cout << "enter" << endl;
+      // cout << "enter" << endl;
       std::vector<ControlPoints> trajs = bspline_optimizer_->distinctiveTrajs(segments);
       cout << "\033[1;33m"
            << "multi-trajs=" << trajs.size() << "\033[1;0m" << endl;
@@ -238,9 +238,11 @@ namespace ego_planner
       double final_cost, min_cost = 999999.0;
       for (int i = trajs.size() - 1; i >= 0; i--)
       {
-
         if (bspline_optimizer_->BsplineOptimizeTrajRebound(ctrl_pts_temp, final_cost, trajs[i], ts))
         {
+
+          cout << "traj " << trajs.size() - i << " success." << endl;
+
           flag_step_1_success = true;
           if (final_cost < min_cost)
           {
@@ -249,7 +251,6 @@ namespace ego_planner
           }
 
           // visualization
-          cout << "---" << endl;
           point_set.clear();
           for (int j = 0; j < ctrl_pts_temp.cols(); j++)
           {
