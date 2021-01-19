@@ -66,13 +66,23 @@ namespace ego_planner
     else if (target_type_ == TARGET_TYPE::PRESET_TARGET)
     {
       trigger_sub_ = nh.subscribe("/traj_start_trigger", 1, &EGOReplanFSM::triggerCallback, this);
-      // ros::Duration(1.0).sleep();
+      
+      ROS_INFO("Wait for 1 second.");
+      int count = 0;
+      while (ros::ok() && count++ < 1000)
+      {
+        ros::spinOnce();
+        ros::Duration(0.001).sleep();
+      }
+      
       ROS_WARN("Waiting for trigger from [n3ctrl] from RC");
+      
       while (ros::ok() && (!have_odom_ || !have_trigger_))
       {
         ros::spinOnce();
         ros::Duration(0.001).sleep();
       }
+      
       planGlobalTrajbyGivenWps();
     }
     else
