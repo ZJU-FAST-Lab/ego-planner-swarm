@@ -10,7 +10,7 @@ namespace ego_planner
 
   EGOPlannerManager::EGOPlannerManager() {}
 
-  EGOPlannerManager::~EGOPlannerManager() { std::cout << "des manager" << std::endl; }
+  EGOPlannerManager::~EGOPlannerManager() { }
 
   void EGOPlannerManager::initPlanModules(ros::NodeHandle &nh, PlanningVisualization::Ptr vis)
   {
@@ -69,7 +69,7 @@ namespace ego_planner
     ros::Duration t_init, t_opt, t_refine;
 
     /*** STEP 1: INIT ***/
-    double ts = (start_pt - local_target_pt).norm() > 0.1 ? pp_.ctrl_pt_dist / pp_.max_vel_ * 1.2 : pp_.ctrl_pt_dist / pp_.max_vel_ * 5; // pp_.ctrl_pt_dist / pp_.max_vel_ is too tense, and will surely exceed the acc/vel limits
+    double ts = (start_pt - local_target_pt).norm() > 0.1 ? pp_.ctrl_pt_dist / pp_.max_vel_ * 1.5 : pp_.ctrl_pt_dist / pp_.max_vel_ * 5; // pp_.ctrl_pt_dist / pp_.max_vel_ is too tense, and will surely exceed the acc/vel limits
     vector<Eigen::Vector3d> point_set, start_end_derivatives;
     static bool flag_first_call = true, flag_force_polynomial = false;
     bool flag_regenerate = false;
@@ -286,28 +286,35 @@ namespace ego_planner
 
     t_start = ros::Time::now();
 
-    /*** STEP 3: REFINE(RE-ALLOCATE TIME) IF NECESSARY ***/
     UniformBspline pos = UniformBspline(ctrl_pts, 3, ts);
     pos.setPhysicalLimits(pp_.max_vel_, pp_.max_acc_, pp_.feasibility_tolerance_);
 
-    double ratio;
-    bool flag_step_2_success = true;
-    if (!pos.checkFeasibility(ratio, false))
+    /*** STEP 3: REFINE(RE-ALLOCATE TIME) IF NECESSARY ***/
+    static bool print_once = true;
+    if ( print_once )
     {
-      cout << "Need to reallocate time." << endl;
-
-      Eigen::MatrixXd optimal_control_points;
-      flag_step_2_success = refineTrajAlgo(pos, start_end_derivatives, ratio, ts, optimal_control_points);
-      if (flag_step_2_success)
-        pos = UniformBspline(optimal_control_points, 3, ts);
+      print_once = false;
+      ROS_ERROR("IN SWARM MODE, REFINE DISABLED!");
     }
+    // disable refine in swarm scenario
+    // double ratio;
+    // bool flag_step_2_success = true;
+    // if (!pos.checkFeasibility(ratio, false))
+    // {
+    //   cout << "Need to reallocate time." << endl;
 
-    if (!flag_step_2_success)
-    {
-      printf("\033[34mThis refined trajectory hits obstacles. It doesn't matter if appeares occasionally. But if continously appearing, Increase parameter \"lambda_fitness\".\n\033[0m");
-      continous_failures_count_++;
-      return false;
-    }
+    //   Eigen::MatrixXd optimal_control_points;
+    //   flag_step_2_success = refineTrajAlgo(pos, start_end_derivatives, ratio, ts, optimal_control_points);
+    //   if (flag_step_2_success)
+    //     pos = UniformBspline(optimal_control_points, 3, ts);
+    // }
+
+    // if (!flag_step_2_success)
+    // {
+    //   printf("\033[34mThis refined trajectory hits obstacles. It doesn't matter if appeares occasionally. But if continously appearing, Increase parameter \"lambda_fitness\".\n\033[0m");
+    //   continous_failures_count_++;
+    //   return false;
+    // }
 
     t_refine = ros::Time::now() - t_start;
 

@@ -459,7 +459,7 @@ namespace ego_planner
           else
           {
             ROS_ERROR("Failed to generate the first trajectory!!!");
-            // todo
+            changeFSMExecState(SEQUENTIAL_START, "FSM");
           }
         }
         else
@@ -854,18 +854,18 @@ namespace ego_planner
       Eigen::Vector3d pos_t = planner_manager_->global_data_.getPosition(t);
       double dist = (pos_t - start_pt_).norm();
 
-      if (t < planner_manager_->global_data_.last_progress_time_ + 1e-5 && dist > planning_horizen_)
-      {
-        // todo
-        ROS_ERROR("last_progress_time_ ERROR, TODO!");
-        ROS_ERROR("last_progress_time_ ERROR, TODO!");
-        ROS_ERROR("last_progress_time_ ERROR, TODO!");
-        ROS_ERROR("last_progress_time_ ERROR, TODO!");
-        ROS_ERROR("last_progress_time_ ERROR, TODO!");
-        cout << "dist=" << dist << endl;
-        cout << "planner_manager_->global_data_.last_progress_time_=" << planner_manager_->global_data_.last_progress_time_ << endl;
-        return;
-      }
+      // if (t < planner_manager_->global_data_.last_progress_time_ + 1e-5 && dist > planning_horizen_)
+      // {
+      //   // todo
+      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
+      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
+      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
+      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
+      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
+      //   cout << "dist=" << dist << endl;
+      //   cout << "planner_manager_->global_data_.last_progress_time_=" << planner_manager_->global_data_.last_progress_time_ << endl;
+      //   return;
+      // }
       if (dist < dist_min)
       {
         dist_min = dist;

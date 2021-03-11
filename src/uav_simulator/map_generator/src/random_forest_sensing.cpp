@@ -418,6 +418,11 @@ int main(int argc, char** argv) {
 
   ros::Duration(0.5).sleep();
 
+  // unsigned int seed = rd();
+  unsigned int seed = 2433201515;
+  cout << "seed=" << seed << endl;
+  eng.seed(seed);
+
   // RandomMapGenerate();
   RandomMapGenerateCylinder();
 

@@ -642,10 +642,10 @@ namespace ego_planner
 
         if (got_intersection_id >= 0)
         {
-          cps_.flag_temp[j] = true;
           double length = (intersection_point - init_points.col(j)).norm();
           if (length > 1e-5)
           {
+            cps_.flag_temp[j] = true;
             for (double a = length; a >= 0.0; a -= grid_map_->getResolution())
             {
               occ = grid_map_->getInflateOccupancy((a / length) * intersection_point + (1 - a / length) * init_points.col(j));
@@ -660,6 +660,10 @@ namespace ego_planner
                 break;
               }
             }
+          }
+          else
+          {
+            got_intersection_id = -1;
           }
         }
       }
@@ -1332,10 +1336,10 @@ namespace ego_planner
 
           if (got_intersection_id >= 0)
           {
-            cps_.flag_temp[j] = true;
             double length = (intersection_point - cps_.points.col(j)).norm();
             if (length > 1e-5)
             {
+              cps_.flag_temp[j] = true;
               for (double a = length; a >= 0.0; a -= grid_map_->getResolution())
               {
                 bool occ = grid_map_->getInflateOccupancy((a / length) * intersection_point + (1 - a / length) * cps_.points.col(j));
@@ -1664,6 +1668,10 @@ namespace ego_planner
 
   void BsplineOptimizer::combineCostRebound(const double *x, double *grad, double &f_combine, const int n)
   {
+    // cout << "drone_id_=" << drone_id_ << endl;
+    // cout << "cps_.points.size()=" << cps_.points.size() << endl;
+    // cout << "n=" << n << endl;
+    // cout << "sizeof(x[0])=" << sizeof(x[0]) << endl;
 
     memcpy(cps_.points.data() + 3 * order_, x, n * sizeof(x[0]));
 
