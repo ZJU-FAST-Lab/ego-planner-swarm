@@ -222,6 +222,13 @@ namespace ego_planner
     if ( (int)id == planner_manager_->pp_.drone_id )
       return;
 
+    if (abs((ros::Time::now() - msg->start_time).toSec()) > 0.25)
+    {
+      ROS_ERROR("Time difference is too large! Local - Remote Agent %d = %fs",
+               msg->drone_id, (ros::Time::now() - msg->start_time).toSec());
+      return;
+    }
+
     /* Fill up the buffer */
     if ( planner_manager_->swarm_trajs_buf_.size() <= id )
     {
@@ -278,6 +285,7 @@ namespace ego_planner
     planner_manager_->swarm_trajs_buf_[id].start_pos_ = planner_manager_->swarm_trajs_buf_[id].position_traj_.evaluateDeBoorT(0);
 
     planner_manager_->swarm_trajs_buf_[id].start_time_ = msg->start_time;
+    // planner_manager_->swarm_trajs_buf_[id].start_time_ = ros::Time::now(); // Un-reliable time sync
     
     /* Check Collision */
     if ( planner_manager_->checkCollision(id) )
