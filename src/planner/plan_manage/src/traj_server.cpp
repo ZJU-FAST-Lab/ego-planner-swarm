@@ -72,7 +72,7 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
 {
   constexpr double PI = 3.1415926;
   constexpr double YAW_DOT_MAX_PER_SEC = PI;
-  // constexpr double YAW_DOT_DOT_MAX_PER_SEC = PI;
+  constexpr double YAW_DOT_DOT_MAX_PER_SEC = PI/200.0;
   std::pair<double, double> yaw_yawdot(0, 0);
   double yaw = 0;
   double yawdot = 0;
@@ -95,8 +95,10 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
       yaw = yaw_temp;
       if (yaw - last_yaw_ > PI)
         yawdot = -YAW_DOT_MAX_PER_SEC;
-      else
+      else {
         yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).toSec();
+      }
+
     }
   }
   else if (yaw_temp - last_yaw_ < -PI)
@@ -114,8 +116,10 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
       yaw = yaw_temp;
       if (yaw - last_yaw_ < -PI)
         yawdot = YAW_DOT_MAX_PER_SEC;
-      else
+      else {
         yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).toSec();
+      }
+
     }
   }
   else
@@ -143,14 +147,26 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
         yawdot = -YAW_DOT_MAX_PER_SEC;
       else if (yaw - last_yaw_ < -PI)
         yawdot = YAW_DOT_MAX_PER_SEC;
-      else
+      else {
         yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).toSec();
+      }
+
     }
   }
 
   if (fabs(yaw - last_yaw_) <= max_yaw_change)
     yaw = 0.5 * last_yaw_ + 0.5 * yaw; // nieve LPF
   yawdot = 0.5 * last_yaw_dot_ + 0.5 * yawdot;
+
+  auto yaw_dot_change = (yawdot - last_yaw_dot_);
+
+  if (yaw_dot_change > YAW_DOT_DOT_MAX_PER_SEC) {
+    yawdot = last_yaw_dot_ + YAW_DOT_DOT_MAX_PER_SEC;
+
+  } else if (yaw_dot_change < -YAW_DOT_DOT_MAX_PER_SEC) {
+    yawdot = last_yaw_dot_ - YAW_DOT_DOT_MAX_PER_SEC;
+  }
+
   last_yaw_ = yaw;
   last_yaw_dot_ = yawdot;
 
