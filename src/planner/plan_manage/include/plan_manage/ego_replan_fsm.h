@@ -57,7 +57,7 @@ namespace ego_planner
     int target_type_; // 1 mannual select, 2 hard code
     double no_replan_thresh_, replan_thresh_;
     double waypoints_[50][3];
-    int waypoint_num_;
+    int waypoint_num_, wp_id_;
     double planning_horizen_, planning_horizen_time_;
     double emergency_time_;
     bool flag_realworld_experiment_;
@@ -74,6 +74,7 @@ namespace ego_planner
     Eigen::Vector3d init_pt_, start_pt_, start_vel_, start_acc_, start_yaw_; // start state
     Eigen::Vector3d end_pt_, end_vel_;                                       // goal state
     Eigen::Vector3d local_target_pt_, local_target_vel_;                     // local target state
+    std::vector<Eigen::Vector3d> wps_;
     int current_wp_;
 
     bool flag_escape_emergency_;
@@ -95,13 +96,14 @@ namespace ego_planner
     std::pair<int, EGOReplanFSM::FSM_EXEC_STATE> timesOfConsecutiveStateCalls();
     void printFSMExecState();
 
-    void planGlobalTrajbyGivenWps();
+    void readGivenWps();
+    void planNextWaypoint(const Eigen::Vector3d next_wp);
     void getLocalTarget();
 
     /* ROS functions */
     void execFSMCallback(const ros::TimerEvent &e);
     void checkCollisionCallback(const ros::TimerEvent &e);
-    void waypointCallback(const nav_msgs::PathConstPtr &msg);
+    void waypointCallback(const geometry_msgs::PoseStampedPtr &msg);
     void triggerCallback(const geometry_msgs::PoseStampedPtr &msg);
     void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
     void swarmTrajsCallback(const traj_utils::MultiBsplinesPtr &msg);
