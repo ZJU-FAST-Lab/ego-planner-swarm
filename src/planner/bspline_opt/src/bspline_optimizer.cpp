@@ -425,8 +425,6 @@ namespace ego_planner
     abandon_this_trajectory:;
     }
 
-    cout << "A5" << endl;
-
     return control_pts_buf;
   } // namespace ego_planner
 

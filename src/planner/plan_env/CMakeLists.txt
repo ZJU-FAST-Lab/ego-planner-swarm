@@ -25,6 +25,7 @@ catkin_package(
  INCLUDE_DIRS include
  LIBRARIES plan_env
  CATKIN_DEPENDS roscpp std_msgs
+ DEPENDS OpenCV
 #  DEPENDS system_lib
 )
 
@@ -47,6 +48,7 @@ add_library( plan_env
 target_link_libraries( plan_env
     ${catkin_LIBRARIES} 
     ${PCL_LIBRARIES}
+    ${OpenCV_LIBS}
     )  
 
 add_executable(obj_generator
