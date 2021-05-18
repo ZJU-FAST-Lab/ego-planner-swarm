@@ -336,7 +336,7 @@ namespace ego_planner
 
     if ((int)msg->traj.size() != msg->drone_id_from + 1) // drone_id must start from 0
     {
-      ROS_ERROR("Wrong trajectory size! msg->traj.size()=%d, msg->drone_id_from+1=%d", msg->traj.size(), msg->drone_id_from + 1);
+      ROS_ERROR("Wrong trajectory size! msg->traj.size()=%d, msg->drone_id_from+1=%d", (int)msg->traj.size(), msg->drone_id_from + 1);
       return;
     }
 
@@ -554,7 +554,7 @@ namespace ego_planner
 
       /* && (end_pt_ - pos).norm() < 0.5 */
       if ((target_type_ == TARGET_TYPE::PRESET_TARGET) &&
-          (wp_id_ < waypoint_num_-1) &&
+          (wp_id_ < waypoint_num_ - 1) &&
           (end_pt_ - pos).norm() < no_replan_thresh_)
       {
         wp_id_++;
@@ -567,7 +567,7 @@ namespace ego_planner
           have_target_ = false;
           have_trigger_ = false;
 
-          if ( target_type_ == TARGET_TYPE::PRESET_TARGET )
+          if (target_type_ == TARGET_TYPE::PRESET_TARGET)
           {
             wp_id_ = 0;
             planNextWaypoint(wps_[wp_id_]);
@@ -846,7 +846,7 @@ namespace ego_planner
       }
       else
       {
-        ROS_ERROR("Wrong traj nums and drone_id pair!!! traj.size()=%d, drone_id=%d", multi_bspline_msgs_buf_.traj.size(), planner_manager_->pp_.drone_id);
+        ROS_ERROR("Wrong traj nums and drone_id pair!!! traj.size()=%d, drone_id=%d", (int)multi_bspline_msgs_buf_.traj.size(), planner_manager_->pp_.drone_id);
         // return plan_and_refine_success;
       }
       swarm_trajs_pub_.publish(multi_bspline_msgs_buf_);
@@ -902,23 +902,29 @@ namespace ego_planner
       Eigen::Vector3d pos_t = planner_manager_->global_data_.getPosition(t);
       double dist = (pos_t - start_pt_).norm();
 
-      // if (t < planner_manager_->global_data_.last_progress_time_ + 1e-5 && dist > planning_horizen_)
-      // {
-      //   // todo
-      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
-      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
-      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
-      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
-      //   ROS_ERROR("last_progress_time_ ERROR, TODO!");
-      //   cout << "dist=" << dist << endl;
-      //   cout << "planner_manager_->global_data_.last_progress_time_=" << planner_manager_->global_data_.last_progress_time_ << endl;
-      //   return;
-      // }
+      if (t < planner_manager_->global_data_.last_progress_time_ + 1e-5 && dist > planning_horizen_)
+      {
+        // Important conor case!
+        for (; t < planner_manager_->global_data_.global_duration_; t += t_step)
+        {
+          Eigen::Vector3d pos_t_temp = planner_manager_->global_data_.getPosition(t);
+          double dist_temp = (pos_t_temp - start_pt_).norm();
+          if (dist_temp < planning_horizen_)
+          {
+            pos_t = pos_t_temp;
+            dist = (pos_t - start_pt_).norm();
+            cout << "Escape conor case \"getLocalTarget\"" << endl;
+            break;
+          }
+        }
+      }
+
       if (dist < dist_min)
       {
         dist_min = dist;
         dist_min_t = t;
       }
+
       if (dist >= planning_horizen_)
       {
         local_target_pt_ = pos_t;
@@ -928,20 +934,17 @@ namespace ego_planner
     }
     if (t > planner_manager_->global_data_.global_duration_) // Last global point
     {
-      // planner_manager_->grid_map_;
       local_target_pt_ = end_pt_;
+      planner_manager_->global_data_.last_progress_time_ = planner_manager_->global_data_.global_duration_;
     }
 
     if ((end_pt_ - local_target_pt_).norm() < (planner_manager_->pp_.max_vel_ * planner_manager_->pp_.max_vel_) / (2 * planner_manager_->pp_.max_acc_))
     {
-      // local_target_vel_ = (end_pt_ - init_pt_).normalized() * planner_manager_->pp_.max_vel_ * (( end_pt_ - local_target_pt_ ).norm() / ((planner_manager_->pp_.max_vel_*planner_manager_->pp_.max_vel_)/(2*planner_manager_->pp_.max_acc_)));
-      // cout << "A" << endl;
       local_target_vel_ = Eigen::Vector3d::Zero();
     }
     else
     {
       local_target_vel_ = planner_manager_->global_data_.getVelocity(t);
-      // cout << "AA" << endl;
     }
   }
 

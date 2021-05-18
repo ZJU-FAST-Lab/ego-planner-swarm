@@ -10,7 +10,7 @@ namespace ego_planner
 
   EGOPlannerManager::EGOPlannerManager() {}
 
-  EGOPlannerManager::~EGOPlannerManager() { }
+  EGOPlannerManager::~EGOPlannerManager() {}
 
   void EGOPlannerManager::initPlanModules(ros::NodeHandle &nh, PlanningVisualization::Ptr vis)
   {
@@ -63,7 +63,7 @@ namespace ego_planner
       return false;
     }
 
-    bspline_optimizer_->setLocalTargetPt( local_target_pt );
+    bspline_optimizer_->setLocalTargetPt(local_target_pt);
 
     ros::Time t_start = ros::Time::now();
     ros::Duration t_init, t_opt, t_refine;
@@ -290,31 +290,38 @@ namespace ego_planner
     pos.setPhysicalLimits(pp_.max_vel_, pp_.max_acc_, pp_.feasibility_tolerance_);
 
     /*** STEP 3: REFINE(RE-ALLOCATE TIME) IF NECESSARY ***/
-    static bool print_once = true;
-    if ( print_once )
+    // Note: Only adjust time in single drone mode. But we still allow drone_0 to adjust its time profile.
+    if (pp_.drone_id <= 0)
     {
-      print_once = false;
-      ROS_ERROR("IN SWARM MODE, REFINE DISABLED!");
+
+      double ratio;
+      bool flag_step_2_success = true;
+      if (!pos.checkFeasibility(ratio, false))
+      {
+        cout << "Need to reallocate time." << endl;
+
+        Eigen::MatrixXd optimal_control_points;
+        flag_step_2_success = refineTrajAlgo(pos, start_end_derivatives, ratio, ts, optimal_control_points);
+        if (flag_step_2_success)
+          pos = UniformBspline(optimal_control_points, 3, ts);
+      }
+
+      if (!flag_step_2_success)
+      {
+        printf("\033[34mThis refined trajectory hits obstacles. It doesn't matter if appeares occasionally. But if continously appearing, Increase parameter \"lambda_fitness\".\n\033[0m");
+        continous_failures_count_++;
+        return false;
+      }
     }
-    // disable refine in swarm scenario
-    // double ratio;
-    // bool flag_step_2_success = true;
-    // if (!pos.checkFeasibility(ratio, false))
-    // {
-    //   cout << "Need to reallocate time." << endl;
-
-    //   Eigen::MatrixXd optimal_control_points;
-    //   flag_step_2_success = refineTrajAlgo(pos, start_end_derivatives, ratio, ts, optimal_control_points);
-    //   if (flag_step_2_success)
-    //     pos = UniformBspline(optimal_control_points, 3, ts);
-    // }
-
-    // if (!flag_step_2_success)
-    // {
-    //   printf("\033[34mThis refined trajectory hits obstacles. It doesn't matter if appeares occasionally. But if continously appearing, Increase parameter \"lambda_fitness\".\n\033[0m");
-    //   continous_failures_count_++;
-    //   return false;
-    // }
+    else
+    {
+      static bool print_once = true;
+      if (print_once)
+      {
+        print_once = false;
+        ROS_ERROR("IN SWARM MODE, REFINE DISABLED!");
+      }
+    }
 
     t_refine = ros::Time::now() - t_start;
 
@@ -347,18 +354,18 @@ namespace ego_planner
 
   bool EGOPlannerManager::checkCollision(int drone_id)
   {
-    if ( local_data_.start_time_.toSec() < 1e9 ) // It means my first planning has not started
+    if (local_data_.start_time_.toSec() < 1e9) // It means my first planning has not started
       return false;
-    
+
     double my_traj_start_time = local_data_.start_time_.toSec();
     double other_traj_start_time = swarm_trajs_buf_[drone_id].start_time_.toSec();
 
-    double t_start = max( my_traj_start_time, other_traj_start_time );
-    double t_end = min( my_traj_start_time + local_data_.duration_ * 2 / 3, other_traj_start_time + swarm_trajs_buf_[drone_id].duration_ );
+    double t_start = max(my_traj_start_time, other_traj_start_time);
+    double t_end = min(my_traj_start_time + local_data_.duration_ * 2 / 3, other_traj_start_time + swarm_trajs_buf_[drone_id].duration_);
 
-    for ( double t=t_start; t<t_end; t+=0.03 )
+    for (double t = t_start; t < t_end; t += 0.03)
     {
-      if ( (local_data_.position_traj_.evaluateDeBoorT(t - my_traj_start_time) - swarm_trajs_buf_[drone_id].position_traj_.evaluateDeBoorT(t - other_traj_start_time)).norm() < bspline_optimizer_->getSwarmClearance() )
+      if ((local_data_.position_traj_.evaluateDeBoorT(t - my_traj_start_time) - swarm_trajs_buf_[drone_id].position_traj_.evaluateDeBoorT(t - other_traj_start_time)).norm() < bspline_optimizer_->getSwarmClearance())
       {
         return true;
       }

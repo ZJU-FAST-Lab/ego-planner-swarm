@@ -51,8 +51,6 @@ namespace ego_planner
       return oneSeg;
     }
 
-    // cout << "A1" << endl;
-
     constexpr int MAX_TRAJS = 8;
     constexpr int VARIS = 2;
     int seg_upbound = std::min((int)segments.size(), static_cast<int>(floor(log(MAX_TRAJS) / log(VARIS))));
@@ -84,8 +82,6 @@ namespace ego_planner
       //     }
       //   }
     }
-
-    // cout << "A2" << endl;
 
     for (int i = 0; i < seg_upbound; i++)
     {
@@ -266,8 +262,15 @@ namespace ego_planner
 
       exit_multi_loop3:;
       }
-      else
+      else if (RichInfoSegs[i].first.size == 1)
       {
+        cout << "i=" << i << " RichInfoSegs.size()=" << RichInfoSegs.size() << endl;
+        cout << "RichInfoSegs[i].first.size=" << RichInfoSegs[i].first.size << endl;
+        cout << "RichInfoSegs[i].first.direction.size()=" << RichInfoSegs[i].first.direction.size() << endl;
+        cout << "RichInfoSegs[i].first.direction[0].size()=" << RichInfoSegs[i].first.direction[0].size() << endl;
+        cout << "RichInfoSegs[i].first.points.cols()=" << RichInfoSegs[i].first.points.cols() << endl;
+        cout << "RichInfoSegs[i].first.base_point.size()=" << RichInfoSegs[i].first.base_point.size() << endl;
+        cout << "RichInfoSegs[i].first.base_point[0].size()=" << RichInfoSegs[i].first.base_point[0].size() << endl;
         Eigen::Vector3d base_vec_reverse = -RichInfoSegs[i].first.direction[0][0];
         Eigen::Vector3d base_pt_reverse = RichInfoSegs[i].first.points.col(0) + base_vec_reverse * (RichInfoSegs[i].first.base_point[0][0] - RichInfoSegs[i].first.points.col(0)).norm();
 
@@ -312,9 +315,15 @@ namespace ego_planner
           i--;
         }
       }
-
-      // cout << "A3" << endl;
+      else
+      {
+        segments.erase(segments.begin() + i);
+        RichInfoSegs.erase(RichInfoSegs.begin() + i);
+        seg_upbound--;
+        i--;
+      }
     }
+    // cout << "A3" << endl;
 
     // Step 2. Assemble each segment to make up the new control point sequence.
     if (seg_upbound == 0) // After the erase operation above, segment legth will decrease to 0 again.
@@ -323,8 +332,6 @@ namespace ego_planner
       oneSeg.push_back(cps_);
       return oneSeg;
     }
-
-    // cout << "A4" << endl;
 
     std::vector<int> selection(seg_upbound);
     std::fill(selection.begin(), selection.end(), 0);
@@ -418,7 +425,7 @@ namespace ego_planner
     abandon_this_trajectory:;
     }
 
-    // cout << "A5" << endl;
+    cout << "A5" << endl;
 
     return control_pts_buf;
   } // namespace ego_planner
@@ -439,7 +446,7 @@ namespace ego_planner
     /*** Segment the initial trajectory according to obstacles ***/
     constexpr int ENOUGH_INTERVAL = 2;
     double step_size = grid_map_->getResolution() / ((init_points.col(0) - init_points.rightCols(1)).norm() / (init_points.cols() - 1)) / 1.5;
-    int in_id, out_id;
+    int in_id = -1, out_id = -1;
     vector<std::pair<int, int>> segment_ids;
     int same_occ_state_times = ENOUGH_INTERVAL + 1;
     bool occ, last_occ = false;
@@ -699,7 +706,6 @@ namespace ego_planner
               cps_.flag_temp[segment_ids[i].first] = true;
               cps_.base_point[segment_ids[i].first].push_back(init_points.col(segment_ids[i].first));
               cps_.direction[segment_ids[i].first].push_back((intersection_point - middle_point).normalized());
-              // cout << "AA " << segment_ids[i].first << endl;
 
               got_intersection_id = segment_ids[i].first;
             }
@@ -772,7 +778,7 @@ namespace ego_planner
   void BsplineOptimizer::calcSwarmCost(const Eigen::MatrixXd &q, double &cost, Eigen::MatrixXd &gradient)
   {
     cost = 0.0;
-    int end_idx = q.cols() - order_ - (double)(q.cols() - 2*order_)*1.0/3.0; // Only check the first 2/3 points
+    int end_idx = q.cols() - order_ - (double)(q.cols() - 2 * order_) * 1.0 / 3.0; // Only check the first 2/3 points
     const double CLEARANCE = swarm_clearance_ * 2;
     double t_now = ros::Time::now().toSec();
     constexpr double a = 2.0, b = 1.0, inv_a2 = 1 / a / a, inv_b2 = 1 / b / b;
@@ -783,7 +789,7 @@ namespace ego_planner
 
       for (size_t id = 0; id < swarm_trajs_->size(); id++)
       {
-        if ( (swarm_trajs_->at(id).drone_id != (int)id) || swarm_trajs_->at(id).drone_id == drone_id_ )
+        if ((swarm_trajs_->at(id).drone_id != (int)id) || swarm_trajs_->at(id).drone_id == drone_id_)
         {
           continue;
         }
@@ -975,17 +981,16 @@ namespace ego_planner
 
     // zero cost and gradient in hard constraints
     Eigen::Vector3d q_3, q_2, q_1, dq;
-    q_3 = q.col(q.cols()-3);
-    q_2 = q.col(q.cols()-2);
-    q_1 = q.col(q.cols()-1);
+    q_3 = q.col(q.cols() - 3);
+    q_2 = q.col(q.cols() - 2);
+    q_1 = q.col(q.cols() - 1);
 
     dq = 1 / 6.0 * (q_3 + 4 * q_2 + q_1) - local_target_pt_;
     cost += dq.squaredNorm();
 
-    gradient.col(q.cols()-3) += 2 * dq * (1 / 6.0);
-    gradient.col(q.cols()-2) += 2 * dq * (4 / 6.0);
-    gradient.col(q.cols()-1) += 2 * dq * (1 / 6.0);
-
+    gradient.col(q.cols() - 3) += 2 * dq * (1 / 6.0);
+    gradient.col(q.cols() - 2) += 2 * dq * (4 / 6.0);
+    gradient.col(q.cols() - 1) += 2 * dq * (1 / 6.0);
   }
 
   void BsplineOptimizer::calcFeasibilityCost(const Eigen::MatrixXd &q, double &cost,
@@ -1431,8 +1436,8 @@ namespace ego_planner
   {
     iter_num_ = 0;
     int start_id = order_;
-    // int end_id = this->cps_.size - order_; //Fixed end 
-    int end_id = this->cps_.size; // Free end 
+    // int end_id = this->cps_.size - order_; //Fixed end
+    int end_id = this->cps_.size; // Free end
     variable_num_ = 3 * (end_id - start_id);
 
     ros::Time t0 = ros::Time::now(), t1, t2;
@@ -1690,7 +1695,7 @@ namespace ego_planner
     calcFeasibilityCost(cps_.points, f_feasibility, g_feasibility);
     // calcMovingObjCost(cps_.points, f_mov_objs, g_mov_objs);
     calcSwarmCost(cps_.points, f_swarm, g_swarm);
-    calcTerminalCost( cps_.points, f_terminal, g_terminal );
+    calcTerminalCost(cps_.points, f_terminal, g_terminal);
 
     f_combine = lambda1_ * f_smoothness + new_lambda2_ * f_distance + lambda3_ * f_feasibility + new_lambda2_ * f_swarm + lambda2_ * f_terminal;
     //f_combine = lambda1_ * f_smoothness + new_lambda2_ * f_distance + lambda3_ * f_feasibility + new_lambda2_ * f_mov_objs;

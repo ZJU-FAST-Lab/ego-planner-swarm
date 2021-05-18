@@ -47,6 +47,7 @@ namespace ego_planner
 
     void segment(ControlPoints &buf, const int start, const int end)
     {
+
       if (start < 0 || end >= size || points.rows() != 3)
       {
         ROS_ERROR("Wrong segment index! start=%d, end=%d", start, end);
