@@ -225,7 +225,7 @@ Then you will receive depth stream along with binocular stream together at 30Hz 
 # Licence
 The source code is released under [GPLv3](http://www.gnu.org/licenses/) license.
 
-# Maintaince
+# Maintenance
 We are still working on extending the proposed system and improving code reliability. 
 
 For any technical issues, please contact Xin Zhou (iszhouxin@zju.edu.cn) or Fei GAO (fgaoaa@zju.edu.cn).
