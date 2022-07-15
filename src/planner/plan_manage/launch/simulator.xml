@@ -73,7 +73,7 @@
   </node]]>
 
   
-  <!-- <node pkg="so3_quadrotor_simulator" type="quadrotor_simulator_so3" name="drone_$(arg drone_id)_quadrotor_simulator_so3" output="screen">
+  <node pkg="so3_quadrotor_simulator" type="quadrotor_simulator_so3" name="drone_$(arg drone_id)_quadrotor_simulator_so3" output="screen">
         <param name="rate/odom" value="200.0"/>
         <param name="simulator/init_state_x" value="$(arg init_x_)"/>
         <param name="simulator/init_state_y" value="$(arg init_y_)"/>
@@ -101,15 +101,15 @@
         <param name="use_external_yaw "      value="false"/>
         <param name="gains/rot/z" value="1.0"/>    
         <param name="gains/ang/z" value="0.1"/>        
-  </node>   -->
+  </node>  
   
-  <node pkg="poscmd_2_odom" name="drone_$(arg drone_id)_poscmd_2_odom" type="poscmd_2_odom" output="screen">
+  <!-- <node pkg="poscmd_2_odom" name="drone_$(arg drone_id)_poscmd_2_odom" type="poscmd_2_odom" output="screen">
         <param name="init_x" value="$(arg init_x_)"/>
         <param name="init_y" value="$(arg init_y_)"/>
         <param name="init_z" value="$(arg init_z_)"/>
         <remap from="~command" to="drone_$(arg drone_id)_planning/pos_cmd"/>
         <remap from="~odometry" to="drone_$(arg drone_id)_$(arg odometry_topic)"/>
-  </node>
+  </node> -->
  
   <node pkg="odom_visualization" name="drone_$(arg drone_id)_odom_visualization" type="odom_visualization" output="screen">
         <remap from="~odom" to="drone_$(arg drone_id)_visual_slam/odom"/>

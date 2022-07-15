@@ -3,24 +3,24 @@
     <arg name="obj_num" value="10" />
     <arg name="drone_id" value="0"/>
 
-    <arg name="map_size_x" value="50.0"/>
+    <arg name="map_size_x" value="100.0"/>
     <arg name="map_size_y" value="25.0"/>
     <arg name="map_size_z" value=" 2.0"/>
     <arg name="odom_topic" value="visual_slam/odom" />
     
     <!-- map -->
     <node pkg ="map_generator" name ="random_forest" type ="random_forest" output = "screen">
-        <param name="map/x_size" value="26" />
+        <param name="map/x_size" value="10" />
         <param name="map/y_size" value="20" />
         <param name="map/z_size" value="3" />
         <param name="map/resolution" value="0.1"/>
         <param name="ObstacleShape/seed" value="1"/>
-        <param name="map/obs_num" value="250"/>
+        <param name="map/obs_num" value="60"/>
         <param name="ObstacleShape/lower_rad" value="0.5"/>
         <param name="ObstacleShape/upper_rad" value="0.7"/>
         <param name="ObstacleShape/lower_hei" value="0.0"/>
         <param name="ObstacleShape/upper_hei" value="3.0"/>
-        <param name="map/circle_num" value="250"/>
+        <param name="map/circle_num" value="60"/>
         <param name="ObstacleShape/radius_l" value="0.7"/>
         <param name="ObstacleShape/radius_h" value="0.5"/>
         <param name="ObstacleShape/z_l" value="0.7"/>
@@ -52,27 +52,28 @@
         <arg name="fx" value="387.229248046875"/>
         <arg name="fy" value="387.229248046875"/>
         <!-- maximum velocity and acceleration the drone will reach -->
-        <arg name="max_vel" value="2.0" />
+        <arg name="max_vel_navi" value="1" />
+        <arg name="max_vel_cruise" value="5" />
         <arg name="max_acc" value="6.0" />
         <!--always set to 1.5 times grater than sensing horizen-->
         <arg name="planning_horizon" value="7.5" />
-        <arg name="use_distinctive_trajs" value="true" />
+        <arg name="use_distinctive_trajs" value="false" />
         <!-- 1: use 2D Nav Goal to select goal  -->
         <!-- 2: use global waypoints below  -->
         <arg name="flight_type" value="2" />
         <!-- global waypoints -->
         <!-- It generates a piecewise min-snap traj passing all waypoints -->
         <arg name="point_num" value="4" />
-        <arg name="point0_x" value="15" />
+        <arg name="point0_x" value="14" />
         <arg name="point0_y" value="0" />
         <arg name="point0_z" value="1" />
-        <arg name="point1_x" value="-15.0" />
+        <arg name="point1_x" value="-24.0" />
         <arg name="point1_y" value="0.0" />
         <arg name="point1_z" value="1.0" />
-        <arg name="point2_x" value="15.0" />
+        <arg name="point2_x" value="24.0" />
         <arg name="point2_y" value="0.0" />
         <arg name="point2_z" value="1.0" />
-        <arg name="point3_x" value="-15.0" />
+        <arg name="point3_x" value="-24.0" />
         <arg name="point3_y" value="0.0" />
         <arg name="point3_z" value="1.0" />
         <arg name="point4_x" value="15.0" />
@@ -91,7 +92,7 @@
         <arg name="map_size_x_" value="$(arg map_size_x)"/>
         <arg name="map_size_y_" value="$(arg map_size_y)"/>
         <arg name="map_size_z_" value="$(arg map_size_z)"/>
-        <arg name="init_x_" value="-15"/>
+        <arg name="init_x_" value="-20"/>
         <arg name="init_y_" value="0"/>
         <arg name="init_z_" value="0.1"/>
         <arg name="odometry_topic" value="$(arg odom_topic)" />

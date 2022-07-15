@@ -99,6 +99,7 @@ namespace ego_planner
     void readGivenWps();
     void planNextWaypoint(const Eigen::Vector3d next_wp);
     void getLocalTarget();
+    bool determineMaxVel();
 
     /* ROS functions */
     void execFSMCallback(const ros::TimerEvent &e);

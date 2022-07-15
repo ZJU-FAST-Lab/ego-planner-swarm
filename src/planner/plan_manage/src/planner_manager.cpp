@@ -16,7 +16,9 @@ namespace ego_planner
   {
     /* read algorithm parameters */
 
-    nh.param("manager/max_vel", pp_.max_vel_, -1.0);
+    // nh.param("manager/max_vel", pp_.max_vel_, -1.0);
+    nh.param("manager/max_vel_navi", pp_.max_vel_navi_, -1.0);
+    nh.param("manager/max_vel_cruise", pp_.max_vel_cruise_, -1.0);
     nh.param("manager/max_acc", pp_.max_acc_, -1.0);
     nh.param("manager/max_jerk", pp_.max_jerk_, -1.0);
     nh.param("manager/feasibility_tolerance", pp_.feasibility_tolerance_, 0.0);
@@ -25,6 +27,7 @@ namespace ego_planner
     nh.param("manager/use_distinctive_trajs", pp_.use_distinctive_trajs, false);
     nh.param("manager/drone_id", pp_.drone_id, -1);
 
+    pp_.max_vel_ = pp_.max_vel_navi_;
     local_data_.traj_id_ = 0;
     grid_map_.reset(new GridMap);
     grid_map_->initMap(nh);
@@ -53,7 +56,7 @@ namespace ego_planner
     static int count = 0;
     printf("\033[47;30m\n[drone %d replan %d]==============================================\033[0m\n", pp_.drone_id, count++);
     // cout.precision(3);
-    // cout << "start: " << start_pt.transpose() << ", " << start_vel.transpose() << "\ngoal:" << local_target_pt.transpose() << ", " << local_target_vel.transpose()
+    // cout << "start: " << start_pt.transpose() << ", " << start_vel.transpose() << ", " << start_acc.transpose() << "\ngoal:" << local_target_pt.transpose() << ", " << local_target_vel.transpose()
     //      << endl;
 
     if ((start_pt - local_target_pt).norm() < 0.2)
@@ -64,6 +67,7 @@ namespace ego_planner
     }
 
     bspline_optimizer_->setLocalTargetPt(local_target_pt);
+    bspline_optimizer_->setMaxVel(pp_.max_vel_);
 
     ros::Time t_start = ros::Time::now();
     ros::Duration t_init, t_opt, t_refine;
@@ -91,10 +95,19 @@ namespace ego_planner
 
         if (!flag_randomPolyTraj)
         {
+          // ROS_ERROR("AAAA");
+          // cout.precision(3);
+          // cout << "start: " << start_pt.transpose() << ", " << start_vel.transpose() << ", " << start_acc.transpose() << "\ngoal:" << local_target_pt.transpose() << ", " << local_target_vel.transpose() << " Time=" << time << endl;
           gl_traj = PolynomialTraj::one_segment_traj_gen(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
+          // for (double t = 0; t < time; t += 0.1)
+          // {
+          //   cout << gl_traj.evaluate(t).transpose() << endl;
+          // }
+          // cout << endl;
         }
         else
         {
+          // ROS_ERROR("BBBB");
           Eigen::Vector3d horizen_dir = ((start_pt - local_target_pt).cross(Eigen::Vector3d(0, 0, 1))).normalized();
           Eigen::Vector3d vertical_dir = ((start_pt - local_target_pt).cross(horizen_dir)).normalized();
           Eigen::Vector3d random_inserted_pt = (start_pt + local_target_pt) / 2 +
@@ -217,6 +230,11 @@ namespace ego_planner
 
     Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;
     UniformBspline::parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
+
+    // for (int i = 0; i < point_set.size(); ++i)
+    // {
+    //   cout << point_set[i].transpose() << endl;
+    // }
 
     vector<std::pair<int, int>> segments;
     segments = bspline_optimizer_->initControlPoints(ctrl_pts, true);

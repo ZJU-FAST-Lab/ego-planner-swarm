@@ -191,7 +191,7 @@ namespace ego_planner
   struct PlanParameters
   {
     /* planning algorithm parameters */
-    double max_vel_, max_acc_, max_jerk_; // physical limits
+    double max_vel_, max_vel_navi_, max_vel_cruise_, max_acc_, max_jerk_; // physical limits
     double ctrl_pt_dist;                  // distance between adjacient B-spline control points
     double feasibility_tolerance_;        // permitted ratio of vel/acc exceeding limits
     double planning_horizen_;

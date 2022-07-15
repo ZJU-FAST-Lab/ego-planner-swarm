@@ -14,7 +14,7 @@ namespace ego_planner
 
     nh.param("optimization/dist0", dist0_, -1.0);
     nh.param("optimization/swarm_clearance", swarm_clearance_, -1.0);
-    nh.param("optimization/max_vel", max_vel_, -1.0);
+    // nh.param("optimization/max_vel", max_vel_, -1.0);
     nh.param("optimization/max_acc", max_acc_, -1.0);
 
     nh.param("optimization/order", order_, 3);

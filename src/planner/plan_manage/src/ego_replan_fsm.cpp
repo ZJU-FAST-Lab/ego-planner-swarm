@@ -528,15 +528,23 @@ namespace ego_planner
 
     case REPLAN_TRAJ:
     {
-
-      if (planFromCurrentTraj(1))
+      if (determineMaxVel())
       {
-        changeFSMExecState(EXEC_TRAJ, "FSM");
-        publishSwarmTrajs(false);
+        ROS_WARN("Empty to dense environment. emergency stop!");
+        changeFSMExecState(EMERGENCY_STOP, "FSM");
+        // changeFSMExecState(GEN_NEW_TRAJ, "FSM");
       }
       else
       {
-        changeFSMExecState(REPLAN_TRAJ, "FSM");
+        if (planFromCurrentTraj(1))
+        {
+          changeFSMExecState(EXEC_TRAJ, "FSM");
+          publishSwarmTrajs(false);
+        }
+        else
+        {
+          changeFSMExecState(REPLAN_TRAJ, "FSM");
+        }
       }
 
       break;
@@ -754,7 +762,6 @@ namespace ego_planner
 
   bool EGOReplanFSM::callReboundReplan(bool flag_use_poly_init, bool flag_randomPolyTraj)
   {
-
     getLocalTarget();
 
     bool plan_and_refine_success =
@@ -891,6 +898,65 @@ namespace ego_planner
     return true;
   }
 
+  bool EGOReplanFSM::determineMaxVel()
+  {
+    LocalTrajData *info = &planner_manager_->local_data_;
+
+    if (info->traj_id_ >= 1)
+    {
+      ros::Time time_now = ros::Time::now();
+      const double t_cur = (time_now - info->start_time_).toSec();
+      const double t_e = info->duration_;
+
+      const Eigen::Vector3d st = info->position_traj_.evaluateDeBoorT(t_cur);
+      const Eigen::Vector3d ed = info->position_traj_.evaluateDeBoorT(t_e);
+      const Eigen::Vector2d dir_pp = (ed - st).head(2);
+      Eigen::Vector3d dir(dir_pp(1), -dir_pp(0), 0);
+      dir.normalize();
+      const double infla = max(0.05, planner_manager_->grid_map_->getInflation());
+      const double p_step = infla * 2.0;
+      const double t_step = t_e / (dir_pp.norm() / p_step);
+
+      const double CLEARANCE = 2.0;
+      for (double t = t_e; t > t_cur; t -= t_step)
+      {
+        // ROS_ERROR("t_e=%f, t_step=%f", t_e, t_step);
+        Eigen::Vector3d center = info->position_traj_.evaluateDeBoorT(t);
+        for (double zi = -infla; zi <= infla; zi += infla)
+        {
+          for (double l = -CLEARANCE; l <= CLEARANCE; l += p_step)
+          {
+            Eigen::Vector3d check_pt = center + l * dir + Eigen::Vector3d(0, 0, zi);
+            // cout << check_pt.transpose() << endl;
+            if (planner_manager_->grid_map_->getInflateOccupancy(check_pt))
+            {
+              if (fabs(planner_manager_->pp_.max_vel_ - planner_manager_->pp_.max_vel_navi_) < 1e-5)
+              {
+                return false;
+              }
+              else
+              {
+                planner_manager_->pp_.max_vel_ = planner_manager_->pp_.max_vel_navi_;
+                return true;
+              }
+            }
+          }
+        }
+        // cout << endl;
+      }
+
+      // start_pt_ = info->position_traj_.evaluateDeBoorT(t_cur);
+      planner_manager_->pp_.max_vel_ = planner_manager_->pp_.max_vel_cruise_;
+      // planner_manager_->pp_.max_vel_ = planner_manager_->pp_.max_vel_navi_;
+      return false;
+    }
+    else
+    {
+      planner_manager_->pp_.max_vel_ = planner_manager_->pp_.max_vel_navi_;
+      return false;
+    }
+  }
+
   void EGOReplanFSM::getLocalTarget()
   {
     double t;
@@ -944,7 +1010,7 @@ namespace ego_planner
     }
     else
     {
-      local_target_vel_ = planner_manager_->global_data_.getVelocity(t);
+      local_target_vel_ = planner_manager_->global_data_.getVelocity(t).normalized() * planner_manager_->pp_.max_vel_;
     }
   }
 

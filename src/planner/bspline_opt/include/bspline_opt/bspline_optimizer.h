@@ -109,6 +109,7 @@ namespace ego_planner
     void setWaypoints(const vector<Eigen::Vector3d> &waypts,
                       const vector<int> &waypt_idx); // N-2 constraints at most
     void setLocalTargetPt(const Eigen::Vector3d local_target_pt) { local_target_pt_ = local_target_pt; };
+    void setMaxVel(const double max_vel) { max_vel_ = max_vel; };
 
     void optimize();
 

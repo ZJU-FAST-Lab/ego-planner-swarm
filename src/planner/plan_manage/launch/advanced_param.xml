@@ -13,7 +13,8 @@
   <arg name="fx"/>
   <arg name="fy"/>
 
-  <arg name="max_vel"/>
+  <arg name="max_vel_navi"/>
+  <arg name="max_vel_cruise"/>
   <arg name="max_acc"/>
   <arg name="planning_horizon"/>
 
@@ -124,7 +125,8 @@
     <param name="grid_map/frame_id"      value="world"/>
 
   <!-- planner manager -->
-    <param name="manager/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="manager/max_vel_navi" value="$(arg max_vel_navi)" type="double"/>
+    <param name="manager/max_vel_cruise" value="$(arg max_vel_cruise)" type="double"/>
     <param name="manager/max_acc" value="$(arg max_acc)" type="double"/>
     <param name="manager/max_jerk" value="4" type="double"/>
     <param name="manager/control_points_distance" value="0.4" type="double"/>
@@ -140,12 +142,12 @@
     <param name="optimization/lambda_fitness" value="1.0" type="double"/>
     <param name="optimization/dist0" value="0.5" type="double"/>
     <param name="optimization/swarm_clearance" value="0.5" type="double"/>
-    <param name="optimization/max_vel" value="$(arg max_vel)" type="double"/>
+    <!-- <param name="optimization/max_vel" value="$(arg max_vel)" type="double"/> -->
     <param name="optimization/max_acc" value="$(arg max_acc)" type="double"/>
 
-    <param name="bspline/limit_vel" value="$(arg max_vel)" type="double"/>
+    <!-- <param name="bspline/limit_vel" value="$(arg max_vel)" type="double"/>
     <param name="bspline/limit_acc" value="$(arg max_acc)" type="double"/>
-    <param name="bspline/limit_ratio" value="1.1" type="double"/>
+    <param name="bspline/limit_ratio" value="1.1" type="double"/> -->
 
   <!-- objects prediction -->
     <param name="prediction/obj_num" value="$(arg obj_num_set)" type="int"/>

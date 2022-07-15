@@ -180,6 +180,7 @@ public:
   bool odomValid();
   void getRegion(Eigen::Vector3d& ori, Eigen::Vector3d& size);
   inline double getResolution();
+  inline double getInflation();
   Eigen::Vector3d getOrigin();
   int getVoxelNum();
   bool getOdomDepthTimeout() { return md_.flag_depth_odom_timeout_; }
@@ -402,6 +403,7 @@ inline void GridMap::inflatePoint(const Eigen::Vector3i& pt, int step, vector<Ei
 }
 
 inline double GridMap::getResolution() { return mp_.resolution_; }
+inline double GridMap::getInflation() { return mp_.obstacles_inflation_; }
 
 #endif
 
