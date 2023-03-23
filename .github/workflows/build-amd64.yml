@@ -23,4 +23,4 @@ jobs:
     -
       name: Start to Compile
       run: |
-        docker run -v `pwd`:/root/ego-planner-swarm -it --rm jasonxxxyyy/robotics:runtime-cuda11.4-ros1-amd64 /bin/bash -c "source /opt/ros/noetic/setup.bash && cd /root/ego-planner-swarm && catkin_make"
+        docker run -v `pwd`:/root/ego-planner-swarm --rm jasonxxxyyy/robotics:runtime-cuda11.4-ros1-amd64 /bin/bash -c "source /opt/ros/noetic/setup.bash && cd /root/ego-planner-swarm && catkin_make"
