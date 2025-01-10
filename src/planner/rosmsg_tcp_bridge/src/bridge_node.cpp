@@ -1,13 +1,13 @@
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <boost/thread.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
-#include <traj_utils/MultiBsplines.h>
-#include <traj_utils/Bspline.h>
-#include <nav_msgs/Odometry.h>
-#include <std_msgs/Empty.h>
+#include <traj_utils/msg/multi_bsplines.hpp>
+#include <traj_utils/msg/bspline.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/empty.hpp>
 
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -21,17 +21,26 @@
 using namespace std;
 
 int send_sock_, server_fd_, recv_sock_, udp_server_fd_, udp_send_fd_;
-ros::Subscriber swarm_trajs_sub_, other_odoms_sub_, emergency_stop_sub_, one_traj_sub_;
-ros::Publisher swarm_trajs_pub_, other_odoms_pub_, emergency_stop_pub_, one_traj_pub_;
+
+rclcpp::Subscription<traj_utils::msg::MultiBsplines>::SharedPtr swarm_trajs_sub_;
+rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr other_odoms_sub_;
+rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr emergency_stop_sub_;
+rclcpp::Subscription<traj_utils::msg::Bspline>::SharedPtr one_traj_sub_;
+
+rclcpp::Publisher<traj_utils::msg::MultiBsplines>::SharedPtr swarm_trajs_pub_;
+rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr other_odoms_pub_;
+rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr emergency_stop_pub_;
+rclcpp::Publisher<traj_utils::msg::Bspline>::SharedPtr one_traj_pub_;
+
 string tcp_ip_, udp_ip_;
 int drone_id_;
 double odom_broadcast_freq_;
 char send_buf_[BUF_LEN], recv_buf_[BUF_LEN], udp_recv_buf_[BUF_LEN], udp_send_buf_[BUF_LEN];
 struct sockaddr_in addr_udp_send_;
-traj_utils::MultiBsplinesPtr bsplines_msg_;
-nav_msgs::OdometryPtr odom_msg_;
-std_msgs::EmptyPtr stop_msg_;
-traj_utils::BsplinePtr bspline_msg_;
+traj_utils::msg::MultiBsplines::SharedPtr bsplines_msg_;
+nav_msgs::msg::Odometry::SharedPtr odom_msg_;
+std_msgs::msg::Empty::SharedPtr stop_msg_;
+traj_utils::msg::Bspline::SharedPtr bspline_msg_;
 
 enum MESSAGE_TYPE
 {
@@ -64,12 +73,15 @@ int connect_to_next_drone(const char *ip, const int port)
 
   if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
   {
-    ROS_WARN("Tcp connection to drone_%d Failed", drone_id_+1);
+    RCLCPP_WARN(rclcpp::get_logger("connect_to_next_drone"),
+                "Tcp connection to drone_%d Failed", drone_id_ + 1);
     return -1;
   }
 
   char str[INET_ADDRSTRLEN];
-  ROS_INFO("Connect to %s success!", inet_ntop(AF_INET, &serv_addr.sin_addr, str, sizeof(str)));
+  RCLCPP_INFO(rclcpp::get_logger("connect_to_next_drone"),
+              "Connect to %s success!",
+              inet_ntop(AF_INET, &serv_addr.sin_addr, str, sizeof(str)));
 
   return sock;
 }
@@ -80,7 +92,7 @@ int init_broadcast(const char *ip, const int port)
 
   if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) <= 0)
   {
-    ROS_ERROR("[bridge_node]Socket sender creation error!");
+    RCLCPP_ERROR(rclcpp::get_logger("init_broadcast"), "[bridge_node]Socket sender creation error!");
     exit(EXIT_FAILURE);
   }
 
@@ -147,7 +159,7 @@ int wait_connection_from_previous_drone(const int port, int &server_fd, int &new
   }
 
   char str[INET_ADDRSTRLEN];
-  ROS_INFO( "Receive tcp connection from %s", inet_ntop(AF_INET, &address.sin_addr, str, sizeof(str)) );
+  RCLCPP_INFO(rclcpp::get_logger("wait_connection_from_previous_drone"), "Receive tcp connection from %s", inet_ntop(AF_INET, &address.sin_addr, str, sizeof(str)));
 
   return new_socket;
 }
@@ -186,7 +198,7 @@ int udp_bind_to_port(const int port, int &server_fd)
   return server_fd;
 }
 
-int serializeMultiBsplines(const traj_utils::MultiBsplinesPtr &msg)
+int serializeMultiBsplines(const std::shared_ptr<const traj_utils::msg::MultiBsplines> &msg)
 {
   char *ptr = send_buf_;
 
@@ -201,7 +213,7 @@ int serializeMultiBsplines(const traj_utils::MultiBsplinesPtr &msg)
   }
   if (total_len + 1 > BUF_LEN)
   {
-    ROS_ERROR("[bridge_node] Topic is too large, please enlarge BUF_LEN");
+    RCLCPP_ERROR(rclcpp::get_logger("serializeMultiBsplines"), "[bridge_node] Topic is too large, please enlarge BUF_LEN");
     return -1;
   }
 
@@ -221,7 +233,7 @@ int serializeMultiBsplines(const traj_utils::MultiBsplinesPtr &msg)
     ptr += sizeof(int32_t);
     *((int32_t *)ptr) = msg->traj[i].order;
     ptr += sizeof(int32_t);
-    *((double *)ptr) = msg->traj[i].start_time.toSec();
+    *((double *)ptr) = msg->traj[i].start_time.sec + msg->traj[i].start_time.nanosec / 1e9;
     ptr += sizeof(double);
     *((int64_t *)ptr) = msg->traj[i].traj_id;
     ptr += sizeof(int64_t);
@@ -260,7 +272,7 @@ int serializeMultiBsplines(const traj_utils::MultiBsplinesPtr &msg)
   return ptr - send_buf_;
 }
 
-int serializeOdom(const nav_msgs::OdometryPtr &msg)
+int serializeOdom(const std::shared_ptr<const nav_msgs::msg::Odometry> &msg)
 {
   char *ptr = udp_send_buf_;
 
@@ -278,7 +290,7 @@ int serializeOdom(const nav_msgs::OdometryPtr &msg)
 
   if (total_len + 1 > BUF_LEN)
   {
-    ROS_ERROR("[bridge_node] Topic is too large, please enlarge BUF_LEN");
+    RCLCPP_ERROR(rclcpp::get_logger("serializeOdom"), "[bridge_node] Topic is too large, please enlarge BUF_LEN");
     return -1;
   }
 
@@ -298,9 +310,9 @@ int serializeOdom(const nav_msgs::OdometryPtr &msg)
   ptr += sizeof(size_t);
   memcpy((void *)ptr, (void *)msg->header.frame_id.c_str(), len * sizeof(char));
   ptr += len * sizeof(char);
-  *((uint32_t *)ptr) = msg->header.seq;
-  ptr += sizeof(uint32_t);
-  *((double *)ptr) = msg->header.stamp.toSec();
+  // *((uint32_t *)ptr) = msg->header.seq; // ROS2 delete seq!!!
+  // ptr += sizeof(uint32_t);
+  *((double *)ptr) = msg->header.stamp.sec + msg->header.stamp.nanosec / 1e9;
   ptr += sizeof(double);
 
   *((double *)ptr) = msg->pose.pose.position.x;
@@ -347,7 +359,7 @@ int serializeOdom(const nav_msgs::OdometryPtr &msg)
   return ptr - udp_send_buf_;
 }
 
-int serializeStop(const std_msgs::EmptyPtr &msg)
+int serializeStop(const std::shared_ptr<const std_msgs::msg::Empty> &msg)
 {
   char *ptr = udp_send_buf_;
 
@@ -357,7 +369,7 @@ int serializeStop(const std_msgs::EmptyPtr &msg)
   return ptr - udp_send_buf_;
 }
 
-int serializeOneTraj(const traj_utils::BsplinePtr &msg)
+int serializeOneTraj(const std::shared_ptr<const traj_utils::msg::Bspline> &msg)
 {
   char *ptr = udp_send_buf_;
 
@@ -368,7 +380,7 @@ int serializeOneTraj(const traj_utils::BsplinePtr &msg)
   total_len += sizeof(size_t) + msg->yaw_pts.size() * sizeof(double);
   if (total_len + 1 > BUF_LEN)
   {
-    ROS_ERROR("[bridge_node] Topic is too large, please enlarge BUF_LEN (2)");
+    RCLCPP_ERROR(rclcpp::get_logger("serializeOneTraj"), "[bridge_node] Topic is too large, please enlarge BUF_LEN (2)");
     return -1;
   }
 
@@ -379,7 +391,7 @@ int serializeOneTraj(const traj_utils::BsplinePtr &msg)
   ptr += sizeof(int32_t);
   *((int32_t *)ptr) = msg->order;
   ptr += sizeof(int32_t);
-  *((double *)ptr) = msg->start_time.toSec();
+  *((double *)ptr) = msg->start_time.sec + msg->start_time.nanosec / 1e9;
   ptr += sizeof(double);
   *((int64_t *)ptr) = msg->traj_id;
   ptr += sizeof(int64_t);
@@ -417,7 +429,7 @@ int serializeOneTraj(const traj_utils::BsplinePtr &msg)
   return ptr - udp_send_buf_;
 }
 
-int deserializeOneTraj(traj_utils::BsplinePtr &msg)
+int deserializeOneTraj(std::shared_ptr< traj_utils::msg::Bspline> &msg)
 {
   char *ptr = udp_recv_buf_;
 
@@ -427,7 +439,11 @@ int deserializeOneTraj(traj_utils::BsplinePtr &msg)
   ptr += sizeof(int32_t);
   msg->order = *((int32_t *)ptr);
   ptr += sizeof(int32_t);
-  msg->start_time.fromSec(*((double *)ptr));
+  // msg->start_time.fromSec(*((double *)ptr));
+  double time_in_seconds = *((double *)ptr);
+  msg->start_time.sec = static_cast<int32_t>(time_in_seconds);
+  msg->start_time.nanosec = static_cast<uint32_t>((time_in_seconds - msg->start_time.sec) * 1e9);
+
   ptr += sizeof(double);
   msg->traj_id = *((int64_t *)ptr);
   ptr += sizeof(int64_t);
@@ -464,14 +480,14 @@ int deserializeOneTraj(traj_utils::BsplinePtr &msg)
   return ptr - udp_recv_buf_;
 }
 
-int deserializeStop(std_msgs::EmptyPtr &msg)
+int deserializeStop(std::shared_ptr<std_msgs::msg::Empty> &msg)
 {
   char *ptr = udp_recv_buf_;
 
   return ptr - udp_recv_buf_;
 }
 
-int deserializeOdom(nav_msgs::OdometryPtr &msg)
+int deserializeOdom(std::shared_ptr<nav_msgs::msg::Odometry> &msg)
 {
   char *ptr = udp_recv_buf_;
 
@@ -488,9 +504,13 @@ int deserializeOdom(nav_msgs::OdometryPtr &msg)
   ptr += sizeof(size_t);
   msg->header.frame_id.assign((const char *)ptr, len);
   ptr += len * sizeof(char);
-  msg->header.seq = *((uint32_t *)ptr);
-  ptr += sizeof(uint32_t);
-  msg->header.stamp.fromSec(*((double *)ptr));
+  // msg->header.seq = *((uint32_t *)ptr); // ROS2 delete seq!!!
+  // ptr += sizeof(uint32_t);
+  // msg->header.stamp.fromSec(*((double *)ptr));
+  double time_in_seconds = *((double *)ptr);
+  msg->header.stamp.sec = static_cast<int32_t>(time_in_seconds);
+  msg->header.stamp.nanosec = static_cast<uint32_t>((time_in_seconds - msg->header.stamp.sec) * 1e9);
+
   ptr += sizeof(double);
 
   msg->pose.pose.position.x = *((double *)ptr);
@@ -537,7 +557,7 @@ int deserializeOdom(nav_msgs::OdometryPtr &msg)
   return ptr - udp_recv_buf_;
 }
 
-int deserializeMultiBsplines(traj_utils::MultiBsplinesPtr &msg)
+int deserializeMultiBsplines(std::shared_ptr<traj_utils::msg::MultiBsplines> &msg)
 {
   char *ptr = recv_buf_;
 
@@ -553,7 +573,11 @@ int deserializeMultiBsplines(traj_utils::MultiBsplinesPtr &msg)
     ptr += sizeof(int32_t);
     msg->traj[i].order = *((int32_t *)ptr);
     ptr += sizeof(int32_t);
-    msg->traj[i].start_time.fromSec(*((double *)ptr));
+    // msg->traj[i].start_time.fromSec(*((double *)ptr));
+    double time_in_seconds = *((double *)ptr);
+    msg->traj[i].start_time.sec = static_cast<int32_t>(time_in_seconds);
+    msg->traj[i].start_time.nanosec = static_cast<uint32_t>((time_in_seconds - msg->traj[i].start_time.sec) * 1e9);
+
     ptr += sizeof(double);
     msg->traj[i].traj_id = *((int64_t *)ptr);
     ptr += sizeof(int64_t);
@@ -592,55 +616,61 @@ int deserializeMultiBsplines(traj_utils::MultiBsplinesPtr &msg)
   return ptr - recv_buf_;
 }
 
-void multitraj_sub_tcp_cb(const traj_utils::MultiBsplinesPtr &msg)
+void multitraj_sub_tcp_cb(const std::shared_ptr<const traj_utils::msg::MultiBsplines> &msg)
 {
   int len = serializeMultiBsplines(msg);
   if (send(send_sock_, send_buf_, len, 0) <= 0)
   {
-    ROS_ERROR("TCP SEND ERROR!!!");
+    RCLCPP_ERROR(rclcpp::get_logger("multitraj_sub_tcp_cb"), "TCP SEND ERROR!!!");
   }
 }
 
-void odom_sub_udp_cb(const nav_msgs::OdometryPtr &msg)
+// mmz@todo 原本代码中这里传的是const，但是下面修改了msg，const会报错，还不知道为什么, 只能创建一个副本
+void odom_sub_udp_cb(const std::shared_ptr<const nav_msgs::msg::Odometry> &msg)
 {
 
-  static ros::Time t_last;
-  ros::Time t_now = ros::Time::now();
-  if ((t_now - t_last).toSec() * odom_broadcast_freq_ < 1.0)
+  static rclcpp::Time t_last;
+  rclcpp::Time t_now = rclcpp::Clock().now();
+  if ((t_now - t_last).seconds() * odom_broadcast_freq_ < 1.0)
   {
     return;
   }
   t_last = t_now;
 
-  msg->child_frame_id = string("drone_") + std::to_string(drone_id_);
+  // msg->child_frame_id = string("drone_") + std::to_string(drone_id_);
+  // 创建消息的副本
+  auto mutable_msg = std::make_shared<nav_msgs::msg::Odometry>(*msg);
 
-  int len = serializeOdom(msg);
+  // 修改消息的 child_frame_id
+  mutable_msg->child_frame_id = "drone_" + std::to_string(drone_id_);
+
+  // int len = serializeOdom(msg);
+  int len = serializeOdom(mutable_msg);
 
   if (sendto(udp_send_fd_, udp_send_buf_, len, 0, (struct sockaddr *)&addr_udp_send_, sizeof(addr_udp_send_)) <= 0)
   {
-    ROS_ERROR("UDP SEND ERROR (1)!!!");
+    RCLCPP_ERROR(rclcpp::get_logger("odom_sub_udp_cb"), "UDP SEND ERROR (1)!!!");
   }
 }
 
-void emergency_stop_sub_udp_cb(const std_msgs::EmptyPtr &msg)
+void emergency_stop_sub_udp_cb(const std::shared_ptr<const std_msgs::msg::Empty> &msg)
 {
 
   int len = serializeStop(msg);
 
   if (sendto(udp_send_fd_, udp_send_buf_, len, 0, (struct sockaddr *)&addr_udp_send_, sizeof(addr_udp_send_)) <= 0)
   {
-    ROS_ERROR("UDP SEND ERROR (2)!!!");
+    RCLCPP_ERROR(rclcpp::get_logger("emergency_stop_sub_udp_cb"), "UDP SEND ERROR (2)!!!");
   }
 }
 
-void one_traj_sub_udp_cb(const traj_utils::BsplinePtr &msg)
+void one_traj_sub_udp_cb(const std::shared_ptr<const traj_utils::msg::Bspline> &msg)
 {
-
   int len = serializeOneTraj(msg);
 
   if (sendto(udp_send_fd_, udp_send_buf_, len, 0, (struct sockaddr *)&addr_udp_send_, sizeof(addr_udp_send_)) <= 0)
   {
-    ROS_ERROR("UDP SEND ERROR (3)!!!");
+    RCLCPP_ERROR(rclcpp::get_logger("one_traj_sub_udp_cb"), "UDP SEND ERROR (3)!!!");
   }
 }
 
@@ -651,7 +681,7 @@ void server_fun()
   // Connect
   if (wait_connection_from_previous_drone(PORT, server_fd_, recv_sock_) < 0)
   {
-    ROS_ERROR("[bridge_node]Socket recever creation error!");
+    RCLCPP_ERROR(rclcpp::get_logger("server_fun"), "Socket receiver creation error!");
     exit(EXIT_FAILURE);
   }
 
@@ -659,9 +689,9 @@ void server_fun()
   {
     valread = read(recv_sock_, recv_buf_, BUF_LEN);
 
-    if ( valread <= 0 )
+    if (valread <= 0)
     {
-      ROS_ERROR("Received message length <= 0, maybe connection has lost");
+      RCLCPP_ERROR(rclcpp::get_logger("server_fun"), "Received message length <= 0, maybe connection has lost");
       close(recv_sock_);
       close(server_fd_);
       return;
@@ -669,11 +699,11 @@ void server_fun()
 
     if (valread == deserializeMultiBsplines(bsplines_msg_))
     {
-      swarm_trajs_pub_.publish(*bsplines_msg_);
+      swarm_trajs_pub_->publish(*bsplines_msg_);
     }
     else
     {
-      ROS_ERROR("Received message length not matches the sent one!!!");
+      RCLCPP_ERROR(rclcpp::get_logger("server_fun"), "Received message length not matches the sent one!!!");
       continue;
     }
   }
@@ -688,13 +718,13 @@ void udp_recv_fun()
   // Connect
   if (udp_bind_to_port(UDP_PORT, udp_server_fd_) < 0)
   {
-    ROS_ERROR("[bridge_node]Socket recever creation error!");
+    RCLCPP_ERROR(rclcpp::get_logger("bridge_node"), "Socket receiver creation error!");
     exit(EXIT_FAILURE);
   }
 
   while (true)
   {
-    if ((valread = recvfrom(udp_server_fd_, udp_recv_buf_, BUF_LEN, 0, (struct sockaddr *)&addr_client, (socklen_t *)&addr_len)) < 0)
+    if ((valread = recvfrom(udp_server_fd_, udp_recv_buf_, BUF_LEN, 0, (struct sockaddr *)&addr_client, &addr_len)) < 0)
     {
       perror("recvfrom error:");
       exit(EXIT_FAILURE);
@@ -705,20 +735,18 @@ void udp_recv_fun()
     {
     case MESSAGE_TYPE::STOP:
     {
-
-      if (valread == sizeof(std_msgs::Empty))
+      if (valread == sizeof(std_msgs::msg::Empty))
       {
         if (valread == deserializeStop(stop_msg_))
         {
-          emergency_stop_pub_.publish(*stop_msg_);
+          emergency_stop_pub_->publish(*stop_msg_);
         }
         else
         {
-          ROS_ERROR("Received message length not matches the sent one (1)!!!");
+          RCLCPP_ERROR(rclcpp::get_logger("udp_recv_fun"), "Received message length not matches the sent one (1)!!!");
           continue;
         }
       }
-
       break;
     }
 
@@ -726,87 +754,97 @@ void udp_recv_fun()
     {
       if (valread == deserializeOdom(odom_msg_))
       {
-        other_odoms_pub_.publish(*odom_msg_);
+        other_odoms_pub_->publish(*odom_msg_);
       }
       else
       {
-        ROS_ERROR("Received message length not matches the sent one (2)!!!");
+        RCLCPP_ERROR(rclcpp::get_logger("udp_recv_fun"), "Received message length not matches the sent one (2)!!!");
         continue;
       }
-
       break;
     }
 
     case MESSAGE_TYPE::ONE_TRAJ:
     {
-
-      if ( valread == deserializeOneTraj(bspline_msg_) )
+      if (valread == deserializeOneTraj(bspline_msg_))
       {
-        one_traj_pub_.publish(*bspline_msg_);
+        one_traj_pub_->publish(*bspline_msg_);
       }
       else
       {
-        ROS_ERROR("Received message length not matches the sent one (3)!!!");
+        RCLCPP_ERROR(rclcpp::get_logger("udp_recv_fun"), "Received message length not matches the sent one (3)!!!");
         continue;
       }
-
       break;
     }
 
     default:
-
-      //ROS_ERROR("Unknown received message???");
-
+      // RCLCPP_ERROR(rclcpp::get_logger("udp_recv_fun"), "Unknown received message???");
       break;
     }
   }
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
-  ros::init(argc, argv, "rosmsg_tcp_bridge");
-  ros::NodeHandle nh("~");
+  // 初始化ROS节点
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("rosmsg_tcp_bridge");
 
-  nh.param("next_drone_ip", tcp_ip_, string("127.0.0.1"));
-  nh.param("broadcast_ip", udp_ip_, string("127.0.0.255"));
-  nh.param("drone_id", drone_id_, -1);
-  nh.param("odom_max_freq", odom_broadcast_freq_, 1000.0);
+  // 读取参数
+  node->declare_parameter("next_drone_ip", string("127.0.0.1"));
+  node->declare_parameter("broadcast_ip", string("127.0.0.255"));
+  node->declare_parameter("drone_id", -1);
+  node->declare_parameter("odom_max_freq", 1000.0);
 
-  bsplines_msg_.reset(new traj_utils::MultiBsplines);
-  odom_msg_.reset(new nav_msgs::Odometry);
-  stop_msg_.reset(new std_msgs::Empty);
-  bspline_msg_.reset(new traj_utils::Bspline);
+  node->get_parameter("next_drone_ip", tcp_ip_);
+  node->get_parameter("broadcast_ip", udp_ip_);
+  node->get_parameter("drone_id", drone_id_);
+  node->get_parameter("odom_max_freq", odom_broadcast_freq_);
+
+
+  bsplines_msg_.reset(new traj_utils::msg::MultiBsplines);
+  odom_msg_.reset(new nav_msgs::msg::Odometry);
+  stop_msg_.reset(new std_msgs::msg::Empty);
+  bspline_msg_.reset(new traj_utils::msg::Bspline);
 
   if (drone_id_ == -1)
   {
-    ROS_ERROR("Wrong drone_id!");
+    RCLCPP_ERROR(node->get_logger(), "Wrong drone_id!");
     exit(EXIT_FAILURE);
   }
 
   string sub_traj_topic_name = string("/drone_") + std::to_string(drone_id_) + string("_planning/swarm_trajs");
-  swarm_trajs_sub_ = nh.subscribe(sub_traj_topic_name.c_str(), 10, multitraj_sub_tcp_cb, ros::TransportHints().tcpNoDelay());
+  swarm_trajs_sub_ = node->create_subscription<traj_utils::msg::MultiBsplines>(
+      sub_traj_topic_name.c_str(), 10, multitraj_sub_tcp_cb);
 
-  if ( drone_id_ >= 1 )
+  RCLCPP_INFO(node->get_logger(), "Finish!!!!!!!!!!!!!");
+
+  if (drone_id_ >= 1)
   {
     string pub_traj_topic_name = string("/drone_") + std::to_string(drone_id_ - 1) + string("_planning/swarm_trajs");
-    swarm_trajs_pub_ = nh.advertise<traj_utils::MultiBsplines>(pub_traj_topic_name.c_str(), 10);
+    swarm_trajs_pub_ = node->create_publisher<traj_utils::msg::MultiBsplines>(pub_traj_topic_name.c_str(), 10);
   }
 
-  other_odoms_sub_ = nh.subscribe("my_odom", 10, odom_sub_udp_cb, ros::TransportHints().tcpNoDelay());
-  other_odoms_pub_ = nh.advertise<nav_msgs::Odometry>("/others_odom", 10);
+  other_odoms_sub_ = node->create_subscription<nav_msgs::msg::Odometry>(
+      "my_odom", 10, odom_sub_udp_cb);
+  other_odoms_pub_ = node->create_publisher<nav_msgs::msg::Odometry>(
+      "/others_odom", 10);
 
-  //emergency_stop_sub_ = nh.subscribe("emergency_stop_broadcast", 10, emergency_stop_sub_udp_cb, ros::TransportHints().tcpNoDelay());
-  //emergency_stop_pub_ = nh.advertise<std_msgs::Empty>("emergency_stop_recv", 10);
+  // emergency_stop_sub_ = node->create_subscription<std_msgs::msg::Empty>("emergency_stop_broadcast", 10, emergency_stop_sub_udp_cb);
+  // emergency_stop_pub_ = node->create_publisher<std_msgs::msg::Empty>("emergency_stop_recv", 10);
 
-  one_traj_sub_ = nh.subscribe("/broadcast_bspline", 100, one_traj_sub_udp_cb, ros::TransportHints().tcpNoDelay());
-  one_traj_pub_ = nh.advertise<traj_utils::Bspline>("/broadcast_bspline2", 100);
+  one_traj_sub_ = node->create_subscription<traj_utils::msg::Bspline>(
+      "/broadcast_bspline", 100, one_traj_sub_udp_cb);
+  one_traj_pub_ = node->create_publisher<traj_utils::msg::Bspline>(
+      "/broadcast_bspline2", 100);
 
   boost::thread recv_thd(server_fun);
   recv_thd.detach();
-  ros::Duration(0.1).sleep();
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
   boost::thread udp_recv_thd(udp_recv_fun);
   udp_recv_thd.detach();
-  ros::Duration(0.1).sleep();
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
 
   // TCP connect
   send_sock_ = connect_to_next_drone(tcp_ip_.c_str(), PORT);
@@ -816,7 +854,7 @@ int main(int argc, char **argv)
 
   cout << "[rosmsg_tcp_bridge] start running" << endl;
 
-  ros::spin();
+  rclcpp::spin(node);
 
   close(send_sock_);
   close(recv_sock_);
@@ -824,5 +862,6 @@ int main(int argc, char **argv)
   close(udp_server_fd_);
   close(udp_send_fd_);
 
+  rclcpp::shutdown();
   return 0;
 }

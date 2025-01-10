@@ -1,22 +1,22 @@
-#include <ros/ros.h>
-#include <visualization_msgs/Marker.h>
+#include <rclcpp/rclcpp.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <iostream>
 
-#include <plan_manage/ego_replan_fsm.h>
+#include <ego_planner/ego_replan_fsm.h>
 
 using namespace ego_planner;
 
 int main(int argc, char **argv)
 {
-
-  ros::init(argc, argv, "ego_planner_node");
-  ros::NodeHandle nh("~");
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<rclcpp::Node>("ego_planner_node");
 
   EGOReplanFSM rebo_replan;
 
-  rebo_replan.init(nh);
+  rebo_replan.init(node);
 
-  // ros::Duration(1.0).sleep();
-  ros::spin();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }

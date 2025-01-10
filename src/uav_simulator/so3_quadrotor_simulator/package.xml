@@ -1,28 +1,25 @@
-<package>
-  <version>0.0.0</version>
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>so3_quadrotor_simulator</name>
-  <description>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="ma@todo.todo">ma</maintainer>
+  <license>TODO: License declaration</license>
 
-     quadrotor_simulator
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  </description>
+  <depend>rclcpp</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>Eigen3</depend>
+  <depend>quadrotor_msgs</depend>
+  <depend>uav_utils</depend>
 
-  <maintainer email="todo@todo.todo">Kartik Mohta</maintainer>
-  <license>BSD</license>
-  <url>http://ros.org/wiki/quadrotor_simulator</url>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-
-  <build_depend>roscpp</build_depend>
-  <build_depend>quadrotor_msgs</build_depend>
-  <build_depend>uav_utils</build_depend>
-  <build_depend>cmake_utils</build_depend>
-
-  <run_depend>roscpp</run_depend>
-  <run_depend>quadrotor_msgs</run_depend>
-  <run_depend>uav_utils</run_depend>
-  <run_depend>cmake_utils</run_depend>
-
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
-
-

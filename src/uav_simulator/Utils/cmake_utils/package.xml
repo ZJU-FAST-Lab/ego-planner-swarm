@@ -1,18 +1,20 @@
 <?xml version="1.0"?>
-<package  format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>cmake_utils</name>
   <version>0.0.0</version>
-  <description>
-  Once you used this package,
-  then you do not need to copy cmake files among packages
-  </description>
+  <description>TODO: Package description</description>
+  <maintainer email="ma@todo.todo">ma</maintainer>
+  <license>TODO: License declaration</license>
 
-  <maintainer email="william.wu@dji.com"> William.Wu </maintainer>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <license>LGPLv3</license>
+  <depend>rclcpp</depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
-  <depend>cmake_modules</depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

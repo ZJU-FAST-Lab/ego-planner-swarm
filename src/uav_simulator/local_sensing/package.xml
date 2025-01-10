@@ -1,38 +1,33 @@
 <?xml version="1.0"?>
-<package>
-  <name>local_sensing_node</name>
-  <version>0.1.0</version>
-  <description>
-    render depth from depth
-  </description>
-  <author>Matia Pizzoli</author>
-  <maintainer email="matia.pizzoli@gmail.com">Matia Pizzoli</maintainer>
-  <license>GPLv3</license>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>local_sensing</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="ma@todo.todo">ma</maintainer>
+  <license>TODO: License declaration</license>
 
-  <!-- Dependencies which this package needs to build itself. -->
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- Dependencies needed to compile this package. -->
-  <build_depend>cmake_modules</build_depend> <!-- for FindEigen.cmake -->
-  <build_depend>roscpp</build_depend>
-  <build_depend>roslib</build_depend>
-  <build_depend>svo_msgs</build_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>image_transport</build_depend>
-  <build_depend>vikit_ros</build_depend>
-  <build_depend>pcl_ros</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
-  <build_depend>quadrotor_msgs</build_depend>
+  <depend>rclcpp</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>pcl_ros</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>quadrotor_msgs</depend>
+  <depend>Eigen3</depend>
+  <depend>OpenCV</depend>
+  <depend>Boost</depend>
+  <depend>ament_cmake</depend>
 
-  <!-- Dependencies needed after this package is compiled. -->
-  <run_depend>roscpp</run_depend>
-  <run_depend>roslib</run_depend>
-  <run_depend>svo_msgs</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>image_transport</run_depend>
-  <run_depend>vikit_ros</run_depend>
-  <run_depend>pcl_ros</run_depend>
-  <run_depend>dynamic_reconfigure</run_depend>
-  <run_depend>quadrotor_msgs</run_depend>
+  <exec_depend>dynamic_reconfigure</exec_depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

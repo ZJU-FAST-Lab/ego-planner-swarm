@@ -1,20 +1,29 @@
-<package>
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>quadrotor_msgs</name>
   <version>0.0.0</version>
-  <description>quadrotor_msgs</description>
-  <maintainer email="todo@todo.todo">Kartik Mohta</maintainer>
-  <url>http://ros.org/wiki/quadrotor_msgs</url>
-  <license>BSD</license>
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>nav_msgs</build_depend>
-  <build_depend>message_generation</build_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>nav_msgs</run_depend>
-  <run_depend>message_runtime</run_depend>
-  <export>
-    <cpp cflags="-I${prefix}/include"
-         lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib"/>
-  </export>
+  <description>TODO: Package description</description>
+  <maintainer email="ma@todo.todo">ma</maintainer>
+  <license>TODO: License declaration</license>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rosidl_default_generators</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>std_msgs</depend>
+
+  <build_depend>Eigen3</build_depend>
+  <exec_depend>Eigen3</exec_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

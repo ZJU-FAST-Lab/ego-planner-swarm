@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 uint16 quad_time
 float64 des_thrust
 float64 des_roll

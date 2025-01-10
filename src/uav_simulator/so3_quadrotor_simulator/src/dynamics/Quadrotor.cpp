@@ -1,10 +1,11 @@
-#include "quadrotor_simulator/Quadrotor.h"
+#include "so3_quadrotor_simulator/Quadrotor.h"
 #include "ode/boost/numeric/odeint.hpp"
 #include <Eigen/Geometry>
 #include <boost/bind.hpp>
 #include <iostream>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+
 namespace odeint = boost::numeric::odeint;
 
 namespace QuadrotorSimulator
@@ -49,6 +50,7 @@ Quadrotor::step(double dt)
 {
   auto save = internal_state_;
 
+  // 通过数值积分计算出dt内的状态更新
   odeint::integrate(boost::ref(*this), internal_state_, 0.0, dt, dt);
 
   for (int i = 0; i < 22; ++i)
@@ -66,6 +68,7 @@ Quadrotor::step(double dt)
     }
   }
 
+  // 更新状态信息
   for (int i = 0; i < 3; i++)
   {
     state_.x(i) = internal_state_[0 + i];
@@ -81,17 +84,20 @@ Quadrotor::step(double dt)
   state_.motor_rpm(3) = internal_state_[21];
 
   // Re-orthonormalize R (polar decomposition)
+  // 重新正交化旋转矩阵
   Eigen::LLT<Eigen::Matrix3d> llt(state_.R.transpose() * state_.R);
   Eigen::Matrix3d             P = llt.matrixL();
   Eigen::Matrix3d             R = state_.R * P.inverse();
   state_.R                      = R;
 
   // Don't go below zero, simulate floor
+  // 如果飞行器的垂直位置小于零并且速度方向向下，则将其位置设为零，并且速度也设为零，模拟地面碰撞
   if (state_.x(2) < 0.0 && state_.v(2) < 0)
   {
     state_.x(2) = 0;
     state_.v(2) = 0;
   }
+  // 更新状态
   updateInternalState();
 }
 
@@ -161,8 +167,8 @@ Quadrotor::operator()(const Quadrotor::InternalState& x,
                       3.14159265 * (arm_length_) * (arm_length_) * // S
                       cur_state.v.norm() * cur_state.v.norm();
 
-  //  ROS_INFO("resistance: %lf, Thrust: %lf%% ", resistance,
-  //           motor_rpm_sq.sum() / (4 * max_rpm_ * max_rpm_) * 100.0);
+//   RCLCPP_INFO(rclcpp::get_logger("Quadrotor"), "resistance: %lf, Thrust: %lf%% ", resistance,
+//                 motor_rpm_sq.sum() / (4 * max_rpm_ * max_rpm_) * 100.0);
 
   vnorm = cur_state.v;
   if (vnorm.norm() != 0)

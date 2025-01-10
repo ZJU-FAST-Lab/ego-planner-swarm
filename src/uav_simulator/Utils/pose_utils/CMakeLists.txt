@@ -1,31 +1,61 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(pose_utils)
 
-set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-O3 -Wall -g")
-ADD_COMPILE_OPTIONS(-std=c++11 )
-ADD_COMPILE_OPTIONS(-std=c++14 )
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(catkin REQUIRED COMPONENTS
-  #armadillo
-  roscpp
-)
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES pose_utils
-#  CATKIN_DEPENDS geometry_msgs nav_msgs
-#  DEPENDS system_lib
-)
+add_compile_options(-Wall -O3 -g)
 
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(Armadillo REQUIRED)
 
-include_directories(
-    ${catkin_INCLUDE_DIRS}
-    ${ARMADILLO_INCLUDE_DIRS}
-    include
-    )
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # comment the line when this package is in a git repo and when
+  # a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-add_library(pose_utils 
-   ${ARMADILLO_LIBRARIES}
-   src/pose_utils.cpp)
+include_directories(
+  include/pose_utils
+  ${ARMADILLO_INCLUDE_DIRS}
+)
+
+ament_export_include_directories(include)
+
+add_library(pose_utils SHARED src/pose_utils.cpp)
+
+target_link_libraries(pose_utils
+  # ${LAPACK_LIBRARIES}
+  # ${BLAS_LIBRARIES}
+  ${ARMADILLO_LIBRARIES}
+)
+
+ament_target_dependencies(pose_utils rclcpp )
+
+# 安装库文件
+install(TARGETS
+  pose_utils
+  DESTINATION lib
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION include/${PROJECT_NAME}
+)
+
+ament_export_libraries(pose_utils)
+
+
+ament_package()

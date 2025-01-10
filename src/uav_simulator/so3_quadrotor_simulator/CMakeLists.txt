@@ -1,51 +1,67 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(so3_quadrotor_simulator)
 
-add_compile_options(-std=c++11)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
-
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  quadrotor_msgs
-  uav_utils
-  cmake_utils
-)
-
-###########
-## Build ##
-###########
-
-find_package(Eigen3 REQUIRED)
-
-include_directories(${EIGEN3_INCLUDE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/ode)
-##
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(quadrotor_msgs REQUIRED)
 find_package(Armadillo REQUIRED)
-include_directories(${ARMADILLO_INCLUDE_DIRS})
+find_package(Eigen3 REQUIRED)
+find_package(uav_utils REQUIRED)
 
-catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES irobot_msgs
-  CATKIN_DEPENDS roscpp quadrotor_msgs uav_utils
-  DEPENDS Eigen3 system_lib
-)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # comment the line when this package is in a git repo and when
+  # a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-include_directories(include)
 include_directories(
-  ${catkin_INCLUDE_DIRS}
+  include
+  ${EIGEN3_INCLUDE_DIR}
+  ${ARMADILLO_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/ode
 )
 
 add_library(quadrotor_dynamics src/dynamics/Quadrotor.cpp)
+ament_target_dependencies(quadrotor_dynamics rclcpp)
 
-## Declare a cpp executable
-#add_executable(odom_visualization src/odom_visualization.cpp)
-add_executable(quadrotor_simulator_so3
-  src/quadrotor_simulator_so3.cpp)
+# 添加可执行文件
+add_executable(so3_quadrotor_simulator src/quadrotor_simulator_so3.cpp)
 
-target_link_libraries(quadrotor_simulator_so3 
-   ${catkin_LIBRARIES}
-   quadrotor_dynamics
+# 链接依赖库
+ament_target_dependencies(so3_quadrotor_simulator
+  rclcpp
+  nav_msgs
+  sensor_msgs
+  Eigen3
+  quadrotor_msgs
+  uav_utils
 )
+target_link_libraries(so3_quadrotor_simulator quadrotor_dynamics)
+
+# 安装可执行文件
+install(TARGETS so3_quadrotor_simulator
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# 安装 launch 文件
+install(
+  DIRECTORY launch/
+  DESTINATION share/${PROJECT_NAME}/launch
+)
+# 安装config（存放rviz的config文件）
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
+
+ament_package()

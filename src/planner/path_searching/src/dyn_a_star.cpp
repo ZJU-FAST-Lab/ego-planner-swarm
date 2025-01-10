@@ -95,7 +95,7 @@ bool AStar::ConvertToIndexAndAdjustStartEndPoints(Vector3d start_pt, Vector3d en
 
     if (checkOccupancy(Index2Coord(start_idx)))
     {
-        //ROS_WARN("Start point is insdide an obstacle.");
+        // RCLCPP_WARN(rclcpp::get_logger("ConvertToIndexAndAdjustStartEndPoints"), "Start point is insdide an obstacle.");
         do
         {
             start_pt = (start_pt - end_pt).normalized() * step_size_ + start_pt;
@@ -106,7 +106,7 @@ bool AStar::ConvertToIndexAndAdjustStartEndPoints(Vector3d start_pt, Vector3d en
 
     if (checkOccupancy(Index2Coord(end_idx)))
     {
-        //ROS_WARN("End point is insdide an obstacle.");
+        // RCLCPP_WARN(rclcpp::get_logger("ConvertToIndexAndAdjustStartEndPoints"), "End point is insdide an obstacle.");
         do
         {
             end_pt = (end_pt - start_pt).normalized() * step_size_ + end_pt;
@@ -120,7 +120,7 @@ bool AStar::ConvertToIndexAndAdjustStartEndPoints(Vector3d start_pt, Vector3d en
 
 bool AStar::AstarSearch(const double step_size, Vector3d start_pt, Vector3d end_pt)
 {
-    ros::Time time_1 = ros::Time::now();
+    rclcpp::Time time_1 = rclcpp::Clock().now();
     ++rounds_;
 
     step_size_ = step_size;
@@ -130,7 +130,7 @@ bool AStar::AstarSearch(const double step_size, Vector3d start_pt, Vector3d end_
     Vector3i start_idx, end_idx;
     if (!ConvertToIndexAndAdjustStartEndPoints(start_pt, end_pt, start_idx, end_idx))
     {
-        ROS_ERROR("Unable to handle the initial or end point, force return!");
+        RCLCPP_ERROR(rclcpp::get_logger("AstarSearch"), "Unable to handle the initial or end point, force return!");
         return false;
     }
 
@@ -232,18 +232,19 @@ bool AStar::AstarSearch(const double step_size, Vector3d start_pt, Vector3d end_
                         neighborPtr->fScore = tentative_gScore + getHeu(neighborPtr, endPtr);
                     }
                 }
-        ros::Time time_2 = ros::Time::now();
-        if ((time_2 - time_1).toSec() > 0.2)
+        rclcpp::Time time_2 = rclcpp::Clock().now();
+        if ((time_2 - time_1).seconds() > 0.2)
         {
-            ROS_WARN("Failed in A star path searching !!! 0.2 seconds time limit exceeded.");
+            RCLCPP_WARN(rclcpp::get_logger("AstarSearch"), "Failed in A star path searching !!! 0.2 seconds time limit exceeded.");
             return false;
         }
     }
 
-    ros::Time time_2 = ros::Time::now();
+    rclcpp::Time time_2 = rclcpp::Clock().now();
 
-    if ((time_2 - time_1).toSec() > 0.1)
-        ROS_WARN("Time consume in A star path finding is %.3fs, iter=%d", (time_2 - time_1).toSec(), num_iter);
+    if ((time_2 - time_1).seconds() > 0.1)
+        RCLCPP_WARN(rclcpp::get_logger("AstarSearch"), 
+                    "Time consume in A star path finding is %.3fs, iter=%d", (time_2 - time_1).seconds(), num_iter);
 
     return false;
 }

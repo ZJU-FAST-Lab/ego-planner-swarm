@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 
 # the trajectory id, starts from "1".
 uint32 trajectory_id

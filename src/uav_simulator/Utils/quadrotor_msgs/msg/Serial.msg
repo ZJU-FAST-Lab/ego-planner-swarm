@@ -7,7 +7,7 @@ uint8 OUTPUT_DATA = 100 # 'd' in base 10
 uint8 PPR_OUTPUT_DATA = 116 # 't' in base 10
 uint8 PPR_GAINS = 103 # 'g'
 
-Header header
+std_msgs/Header header
 uint8 channel
 uint8 type # One of the types listed above
 uint8[] data

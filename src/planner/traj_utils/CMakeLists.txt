@@ -1,59 +1,74 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(traj_utils)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 
-find_package(catkin REQUIRED COMPONENTS
-  #bspline_opt
-  #path_searching
-  roscpp
-  std_msgs
-  geometry_msgs
-  message_generation
-  #cv_bridge
-)
+add_compile_options(-Wall -O3 -g)
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 find_package(Eigen3 REQUIRED)
-find_package(PCL 1.7 REQUIRED)
+find_package(PCL REQUIRED)
 
-# Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Bspline.msg
-  DataDisp.msg
-  MultiBsplines.msg
-  )
-  
-# Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
+rosidl_generate_interfaces(traj_utils
+  "msg/Bspline.msg"
+  "msg/DataDisp.msg"
+  "msg/MultiBsplines.msg"
+
+  DEPENDENCIES std_msgs geometry_msgs rclcpp builtin_interfaces
 )
 
-catkin_package(
- INCLUDE_DIRS include
- LIBRARIES traj_utils 
- CATKIN_DEPENDS message_runtime
-#  DEPENDS system_lib
-)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # comment the line when this package is in a git repo and when
+  # a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 include_directories( 
     SYSTEM 
     include 
-    ${catkin_INCLUDE_DIRS}
     ${Eigen3_INCLUDE_DIRS} 
     ${PCL_INCLUDE_DIRS}
 )
 
+ament_export_include_directories(include)
+
 link_directories(${PCL_LIBRARY_DIRS})
 
-add_library( traj_utils
+add_library( traj_utils_lib SHARED
     src/planning_visualization.cpp 
     src/polynomial_traj.cpp 
     )
-target_link_libraries( traj_utils
-    ${catkin_LIBRARIES} 
-    )  
+
+ament_target_dependencies(traj_utils_lib std_msgs geometry_msgs visualization_msgs rclcpp Eigen3 PCL)
+
+install(TARGETS traj_utils_lib
+        DESTINATION lib
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME}
+)
+
+ament_export_libraries(traj_utils_lib)
+
+ament_package()

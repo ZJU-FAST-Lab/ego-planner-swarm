@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import rospy
+import rclpy
+from rclpy.node import Node
 import numpy as np
-import tf
-from tf import transformations as tfs
+import tf_transformations as tfs
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Vector3Stamped
@@ -11,6 +11,7 @@ from sensor_msgs.msg import Joy
 
 pub = None
 pub1 = None
+pub2 = None
 
 def callback(odom_msg):
     q = np.array([odom_msg.pose.pose.orientation.x,
@@ -22,9 +23,9 @@ def callback(odom_msg):
 
     euler_msg = Vector3Stamped()
     euler_msg.header = odom_msg.header
-    euler_msg.vector.z = e[0]*180.0/3.14159
-    euler_msg.vector.y = e[1]*180.0/3.14159
-    euler_msg.vector.x = e[2]*180.0/3.14159
+    euler_msg.vector.z = e[0] * 180.0 / 3.14159
+    euler_msg.vector.y = e[1] * 180.0 / 3.14159
+    euler_msg.vector.x = e[2] * 180.0 / 3.14159
 
     pub.publish(euler_msg)
 
@@ -38,9 +39,9 @@ def imu_callback(imu_msg):
 
     euler_msg = Vector3Stamped()
     euler_msg.header = imu_msg.header
-    euler_msg.vector.z = e[0]*180.0/3.14159
-    euler_msg.vector.y = e[1]*180.0/3.14159
-    euler_msg.vector.x = e[2]*180.0/3.14159
+    euler_msg.vector.z = e[0] * 180.0 / 3.14159
+    euler_msg.vector.y = e[1] * 180.0 / 3.14159
+    euler_msg.vector.x = e[2] * 180.0 / 3.14159
 
     pub1.publish(euler_msg)
 
@@ -55,15 +56,23 @@ def joy_callback(joy_msg):
 
 
 if __name__ == "__main__":
-    rospy.init_node("odom_to_euler")
+    # 初始化 ROS 2 节点
+    rclpy.init()
+    node = rclpy.create_node("odom_to_euler")
 
-    pub = rospy.Publisher("~euler", Vector3Stamped, queue_size=10)
-    sub = rospy.Subscriber("~odom", Odometry, callback)
+    # 创建发布者和订阅者
+    pub = node.create_publisher(Vector3Stamped, "euler", 10)
+    sub = node.create_subscription(Odometry, "odom", callback, 10)
 
-    pub1 = rospy.Publisher("~imueuler", Vector3Stamped, queue_size=10)
-    sub1 = rospy.Subscriber("~imu", Imu, imu_callback)
+    pub1 = node.create_publisher(Vector3Stamped, "imueuler", 10)
+    sub1 = node.create_subscription(Imu, "imu", imu_callback, 10)
 
-    pub2 = rospy.Publisher("~ctrlout", Vector3Stamped, queue_size=10)
-    sub2 = rospy.Subscriber("~ctrlin", Joy, joy_callback)
+    pub2 = node.create_publisher(Vector3Stamped, "ctrlout", 10)
+    sub2 = node.create_subscription(Joy, "ctrlin", joy_callback, 10)
 
-    rospy.spin()
+    # 保持节点运行
+    rclpy.spin(node)
+
+    # 关闭节点
+    node.destroy_node()
+    rclpy.shutdown()

@@ -1,5 +1,5 @@
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -53,7 +53,7 @@ optimizeMap(mocka::Maps::BasicInfo& in)
 
   pcl::toROSMsg(*in.cloud, *in.output);
   in.output->header.frame_id = "world";
-  ROS_INFO("finish: number of points after optimization %d", in.cloud->width);
+  RCLCPP_INFO(rclcpp::get_logger("optimizeMap"), "finish: number of points after optimization %d", in.cloud->width);
   delete temp;
   return;
 }
@@ -61,16 +61,18 @@ optimizeMap(mocka::Maps::BasicInfo& in)
 int
 main(int argc, char** argv)
 {
-  ros::init(argc, argv, "mockamap");
-  ros::NodeHandle nh;
-  ros::NodeHandle nh_private("~");
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr node = std::make_shared<rclcpp::Node>("mockamap");
 
-  ros::Publisher pcl_pub =
-    nh.advertise<sensor_msgs::PointCloud2>("mock_map", 1);
+  // 创建一个 ROS2 发布者
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pcl_pub =
+    node->create_publisher<sensor_msgs::msg::PointCloud2>("mock_map", 1);
+
   pcl::PointCloud<pcl::PointXYZ> cloud;
-  sensor_msgs::PointCloud2       output;
+  sensor_msgs::msg::PointCloud2       output;
   // Fill in the cloud data
 
+  // 获取参数
   int seed;
 
   int sizeX;
@@ -82,22 +84,31 @@ main(int argc, char** argv)
 
   int type;
 
-  nh_private.param("seed", seed, 4546);
-  nh_private.param("update_freq", update_freq, 1.0);
-  nh_private.param("resolution", scale, 0.38);
-  nh_private.param("x_length", sizeX, 100);
-  nh_private.param("y_length", sizeY, 100);
-  nh_private.param("z_length", sizeZ, 10);
+  node->declare_parameter("seed", 4546);
+  node->declare_parameter("update_freq", 1.0);
+  node->declare_parameter("resolution", 0.38);
+  node->declare_parameter("x_length", 100);
+  node->declare_parameter("y_length", 100);
+  node->declare_parameter("z_length", 10);
+  node->declare_parameter("type", 3);
 
-  nh_private.param("type", type, 1);
+  node->get_parameter("seed", seed);
+  node->get_parameter("update_freq", update_freq);
+  node->get_parameter("resolution", scale);
+  node->get_parameter("x_length", sizeX);
+  node->get_parameter("y_length", sizeY);
+  node->get_parameter("z_length", sizeZ);
+  node->get_parameter("type", type);
 
+  // 调整尺寸和分辨率
   scale = 1 / scale;
   sizeX = sizeX * scale;
   sizeY = sizeY * scale;
   sizeZ = sizeZ * scale;
 
+  // 配置地图生成信息
   mocka::Maps::BasicInfo info;
-  info.nh_private = &nh_private;
+  info.node       = node;  // ROS2中没有 NodeHandle 私有部分，已移除
   info.sizeX      = sizeX;
   info.sizeY      = sizeY;
   info.sizeZ      = sizeZ;
@@ -106,19 +117,20 @@ main(int argc, char** argv)
   info.output     = &output;
   info.cloud      = &cloud;
 
+  // 生成地图
   mocka::Maps map;
   map.setInfo(info);
   map.generate(type);
 
-  //  optimizeMap(info);
-
-  //! @note publish loop
-  ros::Rate loop_rate(update_freq);
-  while (ros::ok())
+  // 订阅循环
+  rclcpp::Rate loop_rate(update_freq);
+  while (rclcpp::ok())
   {
-    pcl_pub.publish(output);
-    ros::spinOnce();
+    pcl_pub->publish(output);
+    rclcpp::spin_some(node);  // 这里使用 spin_some 代替 ros::spinOnce()
     loop_rate.sleep();
   }
+
+  rclcpp::shutdown();
   return 0;
 }

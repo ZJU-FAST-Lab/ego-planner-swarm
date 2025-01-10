@@ -11,6 +11,7 @@
 
 using namespace mocka;
 
+// 生成随机地图
 void
 Maps::randomMapGenerate()
 {
@@ -19,6 +20,7 @@ Maps::randomMapGenerate()
 
   double _resolution = 1 / info.scale;
 
+  // 设置地图的边界
   double _x_l = -info.sizeX / (2 * info.scale);
   double _x_h = info.sizeX / (2 * info.scale);
   double _y_l = -info.sizeY / (2 * info.scale);
@@ -26,13 +28,19 @@ Maps::randomMapGenerate()
   double _h_l = 0;
   double _h_h = info.sizeZ / info.scale;
 
+  // 获取参数
   double _w_l, _w_h;
   int    _ObsNum;
 
-  info.nh_private->param("width_min", _w_l, 0.6);
-  info.nh_private->param("width_max", _w_h, 1.5);
-  info.nh_private->param("obstacle_number", _ObsNum, 10);
+  info.node->declare_parameter("width_min", 0.6);
+  info.node->declare_parameter("width_max", 1.5);
+  info.node->declare_parameter("obstacle_number", 10);
 
+  info.node->get_parameter("width_min", _w_l);
+  info.node->get_parameter("width_max", _w_h);
+  info.node->get_parameter("obstacle_number", _ObsNum);
+
+  // 设置随机分布
   std::uniform_real_distribution<double> rand_x;
   std::uniform_real_distribution<double> rand_y;
   std::uniform_real_distribution<double> rand_w;
@@ -45,6 +53,7 @@ Maps::randomMapGenerate()
   rand_w = std::uniform_real_distribution<double>(_w_l, _w_h);
   rand_h = std::uniform_real_distribution<double>(_h_l, _h_h);
 
+  // 生成随机障碍物
   for (int i = 0; i < _ObsNum; i++)
   {
     double x, y;
@@ -58,12 +67,14 @@ Maps::randomMapGenerate()
     int widNum = ceil(w / _resolution);
     int heiNum = ceil(h / _resolution);
 
+    // 设置障碍物的边界
     int rl, rh, sl, sh;
     rl = -widNum / 2;
     rh = widNum / 2;
     sl = -widNum / 2;
     sh = widNum / 2;
 
+    // 填充障碍物的点云数据
     for (int r = rl; r < rh; r++)
       for (int s = sl; s < sh; s++)
       {
@@ -89,27 +100,35 @@ Maps::randomMapGenerate()
   pcl2ros();
 }
 
+// 信息格式转换
 void
 Maps::pcl2ros()
 {
-  pcl::toROSMsg(*info.cloud, *info.output);
-  info.output->header.frame_id = "world";
-  ROS_INFO("finish: infill %lf%%",
-           info.cloud->width / (1.0 * info.sizeX * info.sizeY * info.sizeZ));
+    pcl::toROSMsg(*info.cloud, *info.output);
+    info.output->header.frame_id = "world";
+    RCLCPP_INFO(info.node->get_logger(), "finish: infill %lf%%",
+                info.cloud->width / (1.0 * info.sizeX * info.sizeY * info.sizeZ));
 }
 
+// 使用 Perlin 噪声生成三维体素的地图数据，通过控制复杂度、填充率和分形层次等参数，生成类似自然地形的障碍物分布，适用于仿真环境
 void
 Maps::perlin3D()
 {
-  double complexity;
-  double fill;
-  int    fractal;
-  double attenuation;
+  double complexity; // 复杂度
+  double fill; // 填充比例
+  int    fractal; // 分形的层数
+  double attenuation; // 衰减系数
 
-  info.nh_private->param("complexity", complexity, 0.142857);
-  info.nh_private->param("fill", fill, 0.38);
-  info.nh_private->param("fractal", fractal, 1);
-  info.nh_private->param("attenuation", attenuation, 0.5);
+  info.node->declare_parameter("complexity", 0.142857);
+  info.node->declare_parameter("fill", 0.38);
+  info.node->declare_parameter("fractal", 1);
+  info.node->declare_parameter("attenuation", 0.5);
+
+  // 获取参数值
+  info.node->get_parameter("complexity", complexity);
+  info.node->get_parameter("fill", fill);
+  info.node->get_parameter("fractal", fractal);
+  info.node->get_parameter("attenuation", attenuation);
 
   info.cloud->width  = info.sizeX * info.sizeY * info.sizeZ;
   info.cloud->height = 1;
@@ -117,6 +136,7 @@ Maps::perlin3D()
 
   PerlinNoise noise(info.seed);
 
+  // 生成噪声并排序
   std::vector<double>* v = new std::vector<double>;
   v->reserve(info.cloud->width);
   for (int i = 0; i < info.sizeX; ++i)
@@ -138,11 +158,13 @@ Maps::perlin3D()
       }
     }
   }
+  // 排序并计算阈值
   std::sort(v->begin(), v->end());
   int    tpos = info.cloud->width * (1 - fill);
   double tmp  = v->at(tpos);
-  ROS_INFO("threshold: %lf", tmp);
+  RCLCPP_INFO(rclcpp::get_logger("perlin3D"), "threshold: %lf", tmp);
 
+  // 根据阈值生成点云
   int pos = 0;
   for (int i = 0; i < info.sizeX; ++i)
   {
@@ -171,25 +193,28 @@ Maps::perlin3D()
       }
     }
   }
+  // 更新点云宽度并优化内存
   info.cloud->width = pos;
-  ROS_INFO("the number of points before optimization is %d", info.cloud->width);
+  RCLCPP_INFO(rclcpp::get_logger("perlin3D"), "the number of points before optimization is %d", info.cloud->width);
   info.cloud->points.resize(info.cloud->width * info.cloud->height);
   pcl2ros();
 }
 
+// 使用递归分割法生成迷宫
 void
 Maps::recursiveDivision(int xl, int xh, int yl, int yh, Eigen::MatrixXi& maze)
 {
-  ROS_INFO(
-    "generating maze with width %d , height %d", xh - xl + 1, yh - yl + 1);
+  RCLCPP_INFO(rclcpp::get_logger("recursiveDivision"), "generating maze with width %d , height %d", xh - xl + 1, yh - yl + 1);
 
+  // 如果当前区域大小为 5x5 或更大，将在该区域中生成一个垂直和水平的墙，将区域分成 4 个子区域，然后递归处理每个子区域
   if (xl < xh - 3 && yl < yh - 3)
   { // the remaining area is larger than or equal to 5*5, need to add both x
     // wall and y wall
     bool valid = false; // used to judge whether the wall selection is valid
     int  xm    = 0;
     int  ym    = 0;
-    ROS_INFO("entered 5*5 mode");
+    RCLCPP_INFO(rclcpp::get_logger("recursiveDivision"), "entered 5*5 mode");
+    // 生成墙的中心位置
     while (valid == false)
     {
       xm = (std::rand() % (xh - xl - 1) + xl +
@@ -233,6 +258,7 @@ Maps::recursiveDivision(int xl, int xh, int yl, int yh, Eigen::MatrixXi& maze)
       valid = true;
 
     } // xm and ym are now the valid coordinate of the center of the wall
+    // 添加垂直和水平墙
     for (int i = xl; i <= xh; i++)
     {
       maze(i, ym) = 1;
@@ -241,6 +267,7 @@ Maps::recursiveDivision(int xl, int xh, int yl, int yh, Eigen::MatrixXi& maze)
     {
       maze(xm, j) = 1;
     } // adding walls around the center point
+    // 随机生成门的位置
     int d1 = std::rand() % (xm - xl) + xl;
     int d2 = std::rand() % (xh - xm) + xm + 1;
     int d3 = std::rand() % (ym - yl) + yl;
@@ -307,18 +334,20 @@ Maps::recursiveDivision(int xl, int xh, int yl, int yh, Eigen::MatrixXi& maze)
     }
 
     std::cout << maze << std::endl;
+    // 递归调用以分割四个子区域
     recursiveDivision(xl, xm - 1, yl, ym - 1, maze);
     recursiveDivision(xm + 1, xh, yl, ym - 1, maze);
     recursiveDivision(xl, xm - 1, ym + 1, yh, maze);
     recursiveDivision(xm + 1, xh, ym + 1, yh, maze);
 
-    ROS_INFO("finished generating maze with width %d , height %d",
-             xh - xl + 1,
-             yh - yl + 1);
+    RCLCPP_INFO(rclcpp::get_logger("recursiveDivision"), "finished generating maze with width %d , height %d",
+                xh - xl + 1,
+                yh - yl + 1);
     std::cout << maze << std::endl;
     return;
   } // when the remaining area is larger than or equal to 5*5
 
+  // 特殊区域处理
   else if (xl < xh - 2 && yl < yh - 2)
   {
     // bool valid     = false; // used to judge whether the wall selection is valid
@@ -412,16 +441,16 @@ Maps::recursiveDivision(int xl, int xh, int yl, int yh, Eigen::MatrixXi& maze)
     } // the doors are opened for this cell
     std::cout << maze << std::endl;
 
-    ROS_INFO("finished generating maze with width %d , height %d",
-             xh - xl + 1,
-             yh - yl + 1);
+    RCLCPP_INFO(rclcpp::get_logger("recursiveDivision"), "finished generating maze with width %d , height %d",
+            xh - xl + 1,
+            yh - yl + 1);
     std::cout << maze << std::endl;
     return;
   }
 
   else if (xl < xh - 1 && yl < yh - 2)
   { // the case of 3*4+
-    ROS_INFO("entered 3*4+ mode");
+    RCLCPP_INFO(rclcpp::get_logger("recursiveDivision"), "entered 3*4+ mode");
     int doorcount = 0;
     int ym        = 0;
     for (int i = yl; i <= yh; i++)
@@ -453,7 +482,7 @@ Maps::recursiveDivision(int xl, int xh, int yl, int yh, Eigen::MatrixXi& maze)
   //
   else if (xl < xh - 2 && yl < yh - 1)
   { // the case of 4+*3
-    ROS_INFO("entered 4+*3 mode");
+    RCLCPP_INFO(rclcpp::get_logger("recursiveDivision"), "entered 4+*3 mode");
     int doorcount = 0;
     int xm        = 0;
     for (int i = xl; i <= xh; i++)
@@ -490,13 +519,14 @@ Maps::recursiveDivision(int xl, int xh, int yl, int yh, Eigen::MatrixXi& maze)
   }
   else
   {
-    ROS_INFO("finished generating maze with width %d , height %d",
-             xh - xl + 1,
-             yh - yl + 1);
+    RCLCPP_INFO(rclcpp::get_logger("recursiveDivision"), "finished generating maze with width %d , height %d",
+                xh - xl + 1,
+                yh - yl + 1);
     return;
   }
 }
 
+// 递归分割生成迷宫
 void
 Maps::recursizeDivisionMaze(Eigen::MatrixXi& maze)
 {
@@ -516,7 +546,7 @@ Maps::recursizeDivisionMaze(Eigen::MatrixXi& maze)
   else
     return;
 
-  ROS_INFO("debug %d %d %d %d", sx, sy, px, py);
+  RCLCPP_INFO(rclcpp::get_logger("recursiveDivisionMaze"), "debug %d %d %d %d", sx, sy, px, py);
 
   int x1, x2, y1, y2;
 
@@ -539,7 +569,7 @@ Maps::recursizeDivisionMaze(Eigen::MatrixXi& maze)
     y2 = (std::rand() % (sy - py - 3) + py + 1);
   else
     y2 = py + 1;
-  ROS_INFO("%d %d %d %d", x1, x2, y1, y2);
+  RCLCPP_INFO(rclcpp::get_logger("recursiveDivisionMaze"), "%d %d %d %d", x1, x2, y1, y2);
 
   if (px != 1 && px != (sx - 2))
   {
@@ -601,6 +631,7 @@ Maps::recursizeDivisionMaze(Eigen::MatrixXi& maze)
   }
 }
 
+// 生成二维迷宫并转换为三维点云
 void
 Maps::maze2D()
 {
@@ -608,17 +639,24 @@ Maps::maze2D()
   int    type;
   int    addWallX;
   int    addWallY;
-  info.nh_private->param("road_width", width, 1.0);
-  info.nh_private->param("add_wall_x", addWallX, 0);
-  info.nh_private->param("add_wall_y", addWallY, 0);
-  info.nh_private->param("maze_type", type, 1);
+  info.node->declare_parameter("road_width", 1.0);
+  info.node->declare_parameter("add_wall_x", 0);
+  info.node->declare_parameter("add_wall_y", 0);
+  info.node->declare_parameter("maze_type", 1);
 
+  info.node->get_parameter("road_width", width);
+  info.node->get_parameter("add_wall_x", addWallX);
+  info.node->get_parameter("add_wall_y", addWallY);
+  info.node->get_parameter("maze_type", type);
+
+  // 计算迷宫行列并初始化矩阵
   int mx = info.sizeX / (width * info.scale);
   int my = info.sizeY / (width * info.scale);
 
   Eigen::MatrixXi maze(mx, my);
   maze.setZero();
 
+  // 使用递归分割生成迷宫
   switch (type)
   {
     case 1:
@@ -626,6 +664,7 @@ Maps::maze2D()
       break;
   }
 
+  // 添加边界墙
   if (addWallX)
   {
     for (int i = 0; i < mx; ++i)
@@ -645,6 +684,7 @@ Maps::maze2D()
 
   std::cout << maze << std::endl;
 
+  // 将迷宫矩阵转换为三维点云
   for (int i = 0; i < mx; ++i)
   {
     for (int j = 0; j < my; ++j)
@@ -784,16 +824,22 @@ Maps::Maze3DGen()
   int    nodeRad;
   int    roadRad;
 
-  info.nh_private->param("numNodes", numNodes, 10);
-  info.nh_private->param("connectivity", connectivity, 0.5);
-  info.nh_private->param("nodeRad", nodeRad, 3);
-  info.nh_private->param("roadRad", roadRad, 2);
-  ROS_INFO("received parameters : numNodes: %d connectivity: "
-           "%f nodeRad: %d roadRad: %d",
-           numNodes,
-           connectivity,
-           nodeRad,
-           roadRad);
+  // 声明参数并设置默认值
+  info.node->declare_parameter("numNodes", 10);
+  info.node->declare_parameter("connectivity", 0.5);
+  info.node->declare_parameter("nodeRad", 3);
+  info.node->declare_parameter("roadRad", 2);
+
+  // 获取参数值
+  info.node->get_parameter("numNodes", numNodes);
+  info.node->get_parameter("connectivity", connectivity);
+  info.node->get_parameter("nodeRad", nodeRad);
+  info.node->get_parameter("roadRad", roadRad);
+
+  // 输出日志信息
+  RCLCPP_INFO(info.node->get_logger(), 
+              "received parameters : numNodes: %d connectivity: %f nodeRad: %d roadRad: %d",
+              numNodes, connectivity, nodeRad, roadRad);
   // generating random points
   std::vector<pcl::PointXYZ> base;
 
@@ -808,7 +854,7 @@ Maps::Maze3DGen()
     double rz = std::rand() / RAND_MAX +
                 (std::rand() % info.sizeZ) / info.scale -
                 info.sizeZ / (2 * info.scale);
-    ROS_INFO("point: x: %f , y: %f , z: %f", rx, ry, rz);
+    RCLCPP_INFO(rclcpp::get_logger("Maze3DGen"), "point: x: %f , y: %f , z: %f", rx, ry, rz);
 
     pcl::PointXYZ pt_random;
     pt_random.x = rx;
@@ -817,6 +863,7 @@ Maps::Maze3DGen()
     base.push_back(pt_random);
   } // generating random cores in the space
 
+  // 遍历每个体素位置并计算到核心点的距离
   for (int i = 0; i < info.sizeX; i++)
   {
     for (int j = 0; j < info.sizeY; j++)
@@ -830,6 +877,7 @@ Maps::Maze3DGen()
                  info.sizeZ /
                    (2 * info.scale); // marking the corresponding point location
 
+        // 找到每个体素点到最近的两个核心点的距离
         MazePoint mp;
         mp.setPoint(test);
         mp.setPoint2(-1);
@@ -857,6 +905,7 @@ Maps::Maze3DGen()
             mp.setPoint2(ii);
           } // finding the distances to the nearest two cores
         }
+        // 判定当前体素点是墙、道路还是洞孔
         if (std::abs(mp.getDist2() - mp.getDist1()) < 1 / info.scale)
         { // the tested location is on one of the middle planes
           if ((mp.getPoint1() + mp.getPoint2()) >
@@ -888,7 +937,7 @@ Maps::Maze3DGen()
 
   info.cloud->width  = info.cloud->points.size();
   info.cloud->height = 1;
-  ROS_INFO("the number of points before optimization is %d", info.cloud->width);
+  RCLCPP_INFO(rclcpp::get_logger("Maze3DGen"), "the number of points before optimization is %d", info.cloud->width);
   info.cloud->points.resize(info.cloud->width * info.cloud->height);
   pcl2ros();
 }

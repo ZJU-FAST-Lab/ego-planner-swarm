@@ -6,7 +6,7 @@
 #include <bspline_opt/uniform_bspline.h>
 #include <plan_env/grid_map.h>
 #include <plan_env/obj_predictor.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "bspline_opt/lbfgs.hpp"
 #include <traj_utils/plan_container.hpp>
 
@@ -50,7 +50,7 @@ namespace ego_planner
 
       if (start < 0 || end >= size || points.rows() != 3)
       {
-        ROS_ERROR("Wrong segment index! start=%d, end=%d", start, end);
+        RCLCPP_ERROR(rclcpp::get_logger("segment"), "Wrong segment index! start=%d, end=%d", start, end);
         return;
       }
 
@@ -92,7 +92,7 @@ namespace ego_planner
     /* main API */
     void setEnvironment(const GridMap::Ptr &map);
     void setEnvironment(const GridMap::Ptr &map, const fast_planner::ObjPredictor::Ptr mov_obj);
-    void setParam(ros::NodeHandle &nh);
+    void setParam(rclcpp::Node::SharedPtr node);
     Eigen::MatrixXd BsplineOptimizeTraj(const Eigen::MatrixXd &points, const double &ts,
                                         const int &cost_function, int max_num_id, int max_time_id);
 

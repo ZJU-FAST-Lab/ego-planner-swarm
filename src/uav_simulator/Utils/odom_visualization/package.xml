@@ -1,31 +1,28 @@
-<package>
-  <version>0.0.0</version>
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>odom_visualization</name>
-  <description>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="ma@todo.todo">ma</maintainer>
+  <license>TODO: License declaration</license>
 
-     odom_visualization
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  </description>
-  <maintainer email="eeshaojie@todo.todo">Shaojie Shen</maintainer>
-  <license>BSD</license>
-  <url>http://ros.org/wiki/odom_visualization</url>
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>quadrotor_msgs</depend>
+  <depend>tf</depend>
+  <depend>tf2_ros</depend>
+  <depend>pose_utils</depend>
+  <depend>Armadillo</depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
-  <build_depend>roscpp</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>nav_msgs</build_depend>
-  <build_depend>visualization_msgs</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>pose_utils</build_depend>
-
-  <run_depend>roscpp</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>nav_msgs</run_depend>
-  <run_depend>visualization_msgs</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>pose_utils</run_depend>
-
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
-
-

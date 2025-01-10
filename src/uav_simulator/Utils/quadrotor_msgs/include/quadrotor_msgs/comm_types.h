@@ -14,7 +14,7 @@ struct SO3_CMD_INPUT
   uint8_t angle_corrections[2]; // roll,pitch /2500
   uint8_t enable_motors:1;
   uint8_t use_external_yaw:1;
-  uint8_t seq;
+  // uint8_t seq;
 };
 
 #define TYPE_STATUS_DATA 'c'
@@ -22,7 +22,7 @@ struct STATUS_DATA
 {
   uint16_t loop_rate;
   uint16_t voltage;
-  uint8_t seq;
+  // uint8_t seq;
 };
 
 #define TYPE_OUTPUT_DATA 'd'
@@ -38,7 +38,7 @@ struct OUTPUT_DATA
   int16_t mag[3];
   uint8_t radio[8];
   //uint8_t rpm[4];
-  uint8_t seq;
+  // uint8_t seq;
 };
 
 #define TYPE_TRPY_CMD 'p'

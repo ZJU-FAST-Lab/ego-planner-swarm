@@ -1,4 +1,4 @@
-float64 Kp
-float64 Kd
-float64 Kp_yaw
-float64 Kd_yaw
+float64 kp
+float64 kd
+float64 kp_yaw
+float64 kd_yaw

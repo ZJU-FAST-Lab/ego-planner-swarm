@@ -1,14 +1,17 @@
-#include <ros/ros.h>
-#include "drone_detector/drone_detector.h"
+#include <rclcpp/rclcpp.hpp>
+#include "drone_detect/drone_detector.h"
+
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "drone_detect");
-  ros::NodeHandle nh("~");
+    rclcpp::init(argc, argv);
+    /*创建对应节点的共享指针对象*/
+    auto node = std::make_shared<detect::DroneDetector>("drone_detect");
+    node->test();
 
-  detect::DroneDetector drone_detector(nh);
-  drone_detector.test();
-
-  ros::spin();
-  return 0;
+    /* 运行节点，并检测退出信号*/
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
 }
+    

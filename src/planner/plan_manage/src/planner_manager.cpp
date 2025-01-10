@@ -1,40 +1,43 @@
 // #include <fstream>
-#include <plan_manage/planner_manager.h>
+#include <ego_planner/planner_manager.h>
 #include <thread>
-#include "visualization_msgs/Marker.h" // zx-todo
+#include "visualization_msgs/msg/marker.hpp" // zx-todo
 
 namespace ego_planner
 {
-
-  // SECTION interfaces for setup and query
 
   EGOPlannerManager::EGOPlannerManager() {}
 
   EGOPlannerManager::~EGOPlannerManager() {}
 
-  void EGOPlannerManager::initPlanModules(ros::NodeHandle &nh, PlanningVisualization::Ptr vis)
+  void EGOPlannerManager::initPlanModules(rclcpp::Node::SharedPtr &node, PlanningVisualization::Ptr vis)
   {
-    /* read algorithm parameters */
+    node->declare_parameter("manager/max_vel", -1.0);
+    node->declare_parameter("manager/max_acc", -1.0);
+    node->declare_parameter("manager/max_jerk", -1.0);
+    node->declare_parameter("manager/feasibility_tolerance", 0.0);
+    node->declare_parameter("manager/control_points_distance", -1.0);
+    node->declare_parameter("manager/planning_horizon", 5.0);
+    node->declare_parameter("manager/use_distinctive_trajs", false);
+    node->declare_parameter("manager/drone_id", -1);
 
-    nh.param("manager/max_vel", pp_.max_vel_, -1.0);
-    nh.param("manager/max_acc", pp_.max_acc_, -1.0);
-    nh.param("manager/max_jerk", pp_.max_jerk_, -1.0);
-    nh.param("manager/feasibility_tolerance", pp_.feasibility_tolerance_, 0.0);
-    nh.param("manager/control_points_distance", pp_.ctrl_pt_dist, -1.0);
-    nh.param("manager/planning_horizon", pp_.planning_horizen_, 5.0);
-    nh.param("manager/use_distinctive_trajs", pp_.use_distinctive_trajs, false);
-    nh.param("manager/drone_id", pp_.drone_id, -1);
+    node->get_parameter("manager/max_vel", pp_.max_vel_);
+    node->get_parameter("manager/max_acc", pp_.max_acc_);
+    node->get_parameter("manager/max_jerk", pp_.max_jerk_);
+    node->get_parameter("manager/feasibility_tolerance", pp_.feasibility_tolerance_);
+    node->get_parameter("manager/control_points_distance", pp_.ctrl_pt_dist);
+    node->get_parameter("manager/planning_horizon", pp_.planning_horizen_);
+    node->get_parameter("manager/use_distinctive_trajs", pp_.use_distinctive_trajs);
+    node->get_parameter("manager/drone_id", pp_.drone_id);
 
     local_data_.traj_id_ = 0;
     grid_map_.reset(new GridMap);
-    grid_map_->initMap(nh);
-
-    // obj_predictor_.reset(new fast_planner::ObjPredictor(nh));
-    // obj_predictor_->init();
-    // obj_pub_ = nh.advertise<visualization_msgs::Marker>("/dynamic/obj_prdi", 10); // zx-todo
+    // grid_map_->initMap(nh);
+    grid_map_->initMap(node);
 
     bspline_optimizer_.reset(new BsplineOptimizer);
-    bspline_optimizer_->setParam(nh);
+    // bspline_optimizer_->setParam(nh);
+    bspline_optimizer_->setParam(node);
     bspline_optimizer_->setEnvironment(grid_map_, obj_predictor_);
     bspline_optimizer_->a_star_.reset(new AStar);
     bspline_optimizer_->a_star_->initGridMap(grid_map_, Eigen::Vector3i(100, 100, 100));
@@ -42,19 +45,12 @@ namespace ego_planner
     visualization_ = vis;
   }
 
-  // !SECTION
-
-  // SECTION rebond replanning
-
   bool EGOPlannerManager::reboundReplan(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
                                         Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,
                                         Eigen::Vector3d local_target_vel, bool flag_polyInit, bool flag_randomPolyTraj)
   {
     static int count = 0;
     printf("\033[47;30m\n[drone %d replan %d]==============================================\033[0m\n", pp_.drone_id, count++);
-    // cout.precision(3);
-    // cout << "start: " << start_pt.transpose() << ", " << start_vel.transpose() << "\ngoal:" << local_target_pt.transpose() << ", " << local_target_vel.transpose()
-    //      << endl;
 
     if ((start_pt - local_target_pt).norm() < 0.2)
     {
@@ -65,10 +61,12 @@ namespace ego_planner
 
     bspline_optimizer_->setLocalTargetPt(local_target_pt);
 
-    ros::Time t_start = ros::Time::now();
-    ros::Duration t_init, t_opt, t_refine;
+    rclcpp::Time t_start = rclcpp::Clock().now();
+    rclcpp::Duration t_init(0, 0), t_opt(0, 0), t_refine(0, 0);
 
-    /*** STEP 1: INIT ***/
+    /*** STEP 1: INIT
+    根据起始点和目标点的距离计算首个时间步长ts,向量的模大于0.1则用1.5倍否则用5倍
+    ***/
     double ts = (start_pt - local_target_pt).norm() > 0.1 ? pp_.ctrl_pt_dist / pp_.max_vel_ * 1.5 : pp_.ctrl_pt_dist / pp_.max_vel_ * 5; // pp_.ctrl_pt_dist / pp_.max_vel_ is too tense, and will surely exceed the acc/vel limits
     vector<Eigen::Vector3d> point_set, start_end_derivatives;
     static bool flag_first_call = true, flag_force_polynomial = false;
@@ -79,17 +77,20 @@ namespace ego_planner
       start_end_derivatives.clear();
       flag_regenerate = false;
 
+      // 这里如果正常进入if（通常为初次生成），则do部分只进行一次，即只清空一次点集；若进入else则有可能对异常情况重置flag_regenerate并再do一次
       if (flag_first_call || flag_polyInit || flag_force_polynomial /*|| ( start_pt - local_target_pt ).norm() < 1.0*/) // Initial path generated from a min-snap traj by order.
       {
         flag_first_call = false;
         flag_force_polynomial = false;
-
+        // 用于存储生成的轨迹
         PolynomialTraj gl_traj;
 
         double dist = (start_pt - local_target_pt).norm();
+        // 判断 速度的平方/加速度 是否大于dist，并决定如何计算时间
         double time = pow(pp_.max_vel_, 2) / pp_.max_acc_ > dist ? sqrt(dist / pp_.max_acc_) : (dist - pow(pp_.max_vel_, 2) / pp_.max_acc_) / pp_.max_vel_ + 2 * pp_.max_vel_ / pp_.max_acc_;
 
         if (!flag_randomPolyTraj)
+        // false生成一段单一的多项式轨迹，true生成一个包含随机插入点的轨迹
         {
           gl_traj = PolynomialTraj::one_segment_traj_gen(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
         }
@@ -140,7 +141,7 @@ namespace ego_planner
       {
 
         double t;
-        double t_cur = (ros::Time::now() - local_data_.start_time_).toSec();
+        double t_cur = (rclcpp::Clock().now() - local_data_.start_time_).seconds();
 
         vector<double> pseudo_arc_length;
         vector<Eigen::Vector3d> segment_point;
@@ -172,7 +173,7 @@ namespace ego_planner
             }
             else
             {
-              ROS_ERROR("pseudo_arc_length is empty, return!");
+              RCLCPP_ERROR(rclcpp::get_logger("ego_planner"), "pseudo_arc_length is empty, return!");
               continous_failures_count_++;
               return false;
             }
@@ -215,14 +216,16 @@ namespace ego_planner
       }
     } while (flag_regenerate);
 
+    // 将轨迹变为B样条轨迹
     Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;
     UniformBspline::parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
 
     vector<std::pair<int, int>> segments;
     segments = bspline_optimizer_->initControlPoints(ctrl_pts, true);
-
-    t_init = ros::Time::now() - t_start;
-    t_start = ros::Time::now();
+    // 计算时间差并更新时间
+    auto now = rclcpp::Clock().now();
+    t_init = now - t_start;
+    t_start = now;
 
     /*** STEP 2: OPTIMIZE ***/
     bool flag_step_1_success = false;
@@ -264,15 +267,15 @@ namespace ego_planner
         }
       }
 
-      t_opt = ros::Time::now() - t_start;
+      t_opt = rclcpp::Clock().now() - t_start;
 
-      visualization_->displayMultiInitPathList(vis_trajs, 0.2); // This visuallization will take up several milliseconds.
+      visualization_->displayMultiInitPathList(vis_trajs, 0.2);
     }
     else
     {
       flag_step_1_success = bspline_optimizer_->BsplineOptimizeTrajRebound(ctrl_pts, ts);
-      t_opt = ros::Time::now() - t_start;
-      //static int vis_id = 0;
+      t_opt = rclcpp::Clock().now() - t_start;
+      // static int vis_id = 0;
       visualization_->displayInitPathList(point_set, 0.2, 0);
     }
 
@@ -284,7 +287,7 @@ namespace ego_planner
       return false;
     }
 
-    t_start = ros::Time::now();
+    t_start = rclcpp::Clock().now();
 
     UniformBspline pos = UniformBspline(ctrl_pts, 3, ts);
     pos.setPhysicalLimits(pp_.max_vel_, pp_.max_acc_, pp_.feasibility_tolerance_);
@@ -319,20 +322,25 @@ namespace ego_planner
       if (print_once)
       {
         print_once = false;
-        ROS_ERROR("IN SWARM MODE, REFINE DISABLED!");
+        RCLCPP_ERROR(rclcpp::get_logger("ego_planner"), "IN SWARM MODE, REFINE DISABLED!");
       }
     }
 
-    t_refine = ros::Time::now() - t_start;
+    // t_refine = ros::Time::now() - t_start;
+    t_refine = rclcpp::Clock().now() - t_start;
 
     // save planned results
-    updateTrajInfo(pos, ros::Time::now());
+    updateTrajInfo(pos, rclcpp::Clock().now());
 
     static double sum_time = 0;
     static int count_success = 0;
-    sum_time += (t_init + t_opt + t_refine).toSec();
+
+    sum_time += (t_init + t_opt + t_refine).seconds();
+
     count_success++;
-    cout << "total time:\033[42m" << (t_init + t_opt + t_refine).toSec() << "\033[0m,optimize:" << (t_init + t_opt).toSec() << ",refine:" << t_refine.toSec() << ",avg_time=" << sum_time / count_success << endl;
+
+    // cout << "total time:\033[42m" << (t_init + t_opt + t_refine).toSec() << "\033[0m,optimize:" << (t_init + t_opt).toSec() << ",refine:" << t_refine.toSec() << ",avg_time=" << sum_time / count_success << endl;
+    cout << "total time:\033[42m" << (t_init + t_opt + t_refine).seconds() << "\033[0m,optimize:" << (t_init + t_opt).seconds() << ",refine:" << t_refine.seconds() << ",avg_time=" << sum_time / count_success << endl;
 
     // success. YoY
     continous_failures_count_ = 0;
@@ -347,18 +355,21 @@ namespace ego_planner
       control_points.col(i) = stop_pos;
     }
 
-    updateTrajInfo(UniformBspline(control_points, 3, 1.0), ros::Time::now());
+    updateTrajInfo(UniformBspline(control_points, 3, 1.0), rclcpp::Clock().now());
 
     return true;
   }
 
   bool EGOPlannerManager::checkCollision(int drone_id)
   {
-    if (local_data_.start_time_.toSec() < 1e9) // It means my first planning has not started
+    // if (local_data_.start_time_.toSec() < 1e9) // It means my first planning has not started
+    if (local_data_.start_time_.seconds() < 1e9)
       return false;
 
-    double my_traj_start_time = local_data_.start_time_.toSec();
-    double other_traj_start_time = swarm_trajs_buf_[drone_id].start_time_.toSec();
+    // double my_traj_start_time = local_data_.start_time_.toSec();
+    // double other_traj_start_time = swarm_trajs_buf_[drone_id].start_time_.toSec();
+    double my_traj_start_time = local_data_.start_time_.seconds();
+    double other_traj_start_time = swarm_trajs_buf_[drone_id].start_time_.seconds();
 
     double t_start = max(my_traj_start_time, other_traj_start_time);
     double t_end = min(my_traj_start_time + local_data_.duration_ * 2 / 3, other_traj_start_time + swarm_trajs_buf_[drone_id].duration_);
@@ -419,12 +430,6 @@ namespace ego_planner
 
     inter_points.push_back(points.back());
 
-    // for ( int i=0; i<inter_points.size(); i++ )
-    // {
-    //   cout << inter_points[i].transpose() << endl;
-    // }
-
-    // write position matrix
     int pt_num = inter_points.size();
     Eigen::MatrixXd pos(3, pt_num);
     for (int i = 0; i < pt_num; ++i)
@@ -448,7 +453,8 @@ namespace ego_planner
     else
       return false;
 
-    auto time_now = ros::Time::now();
+    auto time_now = rclcpp::Clock().now();
+
     global_data_.setGlobalTraj(gl_traj, time_now);
 
     return true;
@@ -469,6 +475,8 @@ namespace ego_planner
     const double dist_thresh = 4.0;
 
     for (size_t i = 0; i < points.size() - 1; ++i)
+    /*挨个读取点并计算点距判断是否需要插点，随后计算插点并写入矩阵，最后根据插点数量生成全局轨迹
+      最终返回值为是否规划成功的布尔值 */
     {
       inter_points.push_back(points.at(i));
       double dist = (points.at(i + 1) - points.at(i)).norm();
@@ -512,7 +520,8 @@ namespace ego_planner
     else
       return false;
 
-    auto time_now = ros::Time::now();
+    auto time_now = rclcpp::Clock().now();
+
     global_data_.setGlobalTraj(gl_traj, time_now);
 
     return true;
@@ -539,7 +548,7 @@ namespace ego_planner
     return success;
   }
 
-  void EGOPlannerManager::updateTrajInfo(const UniformBspline &position_traj, const ros::Time time_now)
+  void EGOPlannerManager::updateTrajInfo(const UniformBspline &position_traj, const rclcpp::Time time_now)
   {
     local_data_.start_time_ = time_now;
     local_data_.position_traj_ = position_traj;
@@ -555,8 +564,6 @@ namespace ego_planner
   {
     double time_origin = bspline.getTimeSum();
     int seg_num = bspline.getControlPoint().cols() - 3;
-    // double length = bspline.getLength(0.1);
-    // int seg_num = ceil(length / pp_.ctrl_pt_dist);
 
     bspline.lengthenTime(ratio);
     double duration = bspline.getTimeSum();

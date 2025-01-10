@@ -1,14 +1,14 @@
 #include "bspline_opt/uniform_bspline.h"
-#include "nav_msgs/Odometry.h"
-#include "traj_utils/Bspline.h"
-#include "quadrotor_msgs/PositionCommand.h"
-#include "std_msgs/Empty.h"
-#include "visualization_msgs/Marker.h"
-#include <ros/ros.h>
+#include "nav_msgs/msg/odometry.hpp"
+#include "traj_utils/msg/bspline.hpp"
+#include "quadrotor_msgs/msg/position_command.hpp"
+#include "std_msgs/msg/empty.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+#include <rclcpp/rclcpp.hpp>
 
-ros::Publisher pos_cmd_pub;
+rclcpp::Publisher<quadrotor_msgs::msg::PositionCommand>::SharedPtr pos_cmd_pub;
 
-quadrotor_msgs::PositionCommand cmd;
+quadrotor_msgs::msg::PositionCommand cmd;
 double pos_gain[3] = {0, 0, 0};
 double vel_gain[3] = {0, 0, 0};
 
@@ -17,14 +17,14 @@ using ego_planner::UniformBspline;
 bool receive_traj_ = false;
 vector<UniformBspline> traj_;
 double traj_duration_;
-ros::Time start_time_;
+rclcpp::Time start_time_;
 int traj_id_;
 
 // yaw control
 double last_yaw_, last_yaw_dot_;
 double time_forward_;
 
-void bsplineCallback(traj_utils::BsplineConstPtr msg)
+void bsplineCallback(traj_utils::msg::Bspline::ConstPtr msg)
 {
   // parse pos traj
 
@@ -53,7 +53,7 @@ void bsplineCallback(traj_utils::BsplineConstPtr msg)
   //   yaw_pts(i, 0) = msg->yaw_pts[i];
   // }
 
-  //UniformBspline yaw_traj(yaw_pts, msg->order, msg->yaw_dt);
+  // UniformBspline yaw_traj(yaw_pts, msg->order, msg->yaw_dt);
 
   start_time_ = msg->start_time;
   traj_id_ = msg->traj_id;
@@ -68,7 +68,7 @@ void bsplineCallback(traj_utils::BsplineConstPtr msg)
   receive_traj_ = true;
 }
 
-std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros::Time &time_now, ros::Time &time_last)
+std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, rclcpp::Time &time_now, rclcpp::Time &time_last)
 {
   constexpr double PI = 3.1415926;
   constexpr double YAW_DOT_MAX_PER_SEC = PI;
@@ -79,7 +79,7 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
 
   Eigen::Vector3d dir = t_cur + time_forward_ <= traj_duration_ ? traj_[0].evaluateDeBoorT(t_cur + time_forward_) - pos : traj_[0].evaluateDeBoorT(traj_duration_) - pos;
   double yaw_temp = dir.norm() > 0.1 ? atan2(dir(1), dir(0)) : last_yaw_;
-  double max_yaw_change = YAW_DOT_MAX_PER_SEC * (time_now - time_last).toSec();
+  double max_yaw_change = YAW_DOT_MAX_PER_SEC * (time_now - time_last).seconds();
   if (yaw_temp - last_yaw_ > PI)
   {
     if (yaw_temp - last_yaw_ - 2 * PI < -max_yaw_change)
@@ -96,7 +96,7 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
       if (yaw - last_yaw_ > PI)
         yawdot = -YAW_DOT_MAX_PER_SEC;
       else
-        yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).toSec();
+        yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).seconds();
     }
   }
   else if (yaw_temp - last_yaw_ < -PI)
@@ -115,7 +115,7 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
       if (yaw - last_yaw_ < -PI)
         yawdot = YAW_DOT_MAX_PER_SEC;
       else
-        yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).toSec();
+        yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).seconds();
     }
   }
   else
@@ -144,7 +144,7 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
       else if (yaw - last_yaw_ < -PI)
         yawdot = YAW_DOT_MAX_PER_SEC;
       else
-        yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).toSec();
+        yawdot = (yaw_temp - last_yaw_) / (time_now - time_last).seconds();
     }
   }
 
@@ -160,19 +160,21 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
   return yaw_yawdot;
 }
 
-void cmdCallback(const ros::TimerEvent &e)
+void cmdCallback()
 {
   /* no publishing before receive traj_ */
   if (!receive_traj_)
     return;
 
-  ros::Time time_now = ros::Time::now();
-  double t_cur = (time_now - start_time_).toSec();
+  // 统一时间源
+  rclcpp::Clock clock(RCL_ROS_TIME);  
+  rclcpp::Time time_now = clock.now();
+  double t_cur = (time_now - start_time_).seconds();
 
   Eigen::Vector3d pos(Eigen::Vector3d::Zero()), vel(Eigen::Vector3d::Zero()), acc(Eigen::Vector3d::Zero()), pos_f;
   std::pair<double, double> yaw_yawdot(0, 0);
 
-  static ros::Time time_last = ros::Time::now();
+  static rclcpp::Time time_last = clock.now();
   if (t_cur < traj_duration_ && t_cur >= 0.0)
   {
     pos = traj_[0].evaluateDeBoorT(t_cur);
@@ -206,7 +208,7 @@ void cmdCallback(const ros::TimerEvent &e)
 
   cmd.header.stamp = time_now;
   cmd.header.frame_id = "world";
-  cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_READY;
+  cmd.trajectory_flag = quadrotor_msgs::msg::PositionCommand::TRAJECTORY_STATUS_READY;
   cmd.trajectory_id = traj_id_;
 
   cmd.position.x = pos(0);
@@ -226,20 +228,26 @@ void cmdCallback(const ros::TimerEvent &e)
 
   last_yaw_ = cmd.yaw;
 
-  pos_cmd_pub.publish(cmd);
+  pos_cmd_pub->publish(cmd);
 }
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "traj_server");
-  // ros::NodeHandle node;
-  ros::NodeHandle nh("~");
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("traj_server");
 
-  ros::Subscriber bspline_sub = nh.subscribe("planning/bspline", 10, bsplineCallback);
+  auto bspline_sub = node->create_subscription<traj_utils::msg::Bspline>(
+      "planning/bspline",
+      10,
+      bsplineCallback);
 
-  pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
+  pos_cmd_pub = node->create_publisher<quadrotor_msgs::msg::PositionCommand>(
+      "/position_cmd",
+      50);
 
-  ros::Timer cmd_timer = nh.createTimer(ros::Duration(0.01), cmdCallback);
+  auto cmd_timer = node->create_wall_timer(
+      std::chrono::milliseconds(10),
+      cmdCallback);
 
   /* control parameter */
   cmd.kx[0] = pos_gain[0];
@@ -250,15 +258,18 @@ int main(int argc, char **argv)
   cmd.kv[1] = vel_gain[1];
   cmd.kv[2] = vel_gain[2];
 
-  nh.param("traj_server/time_forward", time_forward_, -1.0);
+  node->declare_parameter("traj_server/time_forward", -1.0);
+  node->get_parameter("traj_server/time_forward", time_forward_);
+
   last_yaw_ = 0.0;
   last_yaw_dot_ = 0.0;
 
-  ros::Duration(1.0).sleep();
+  rclcpp::sleep_for(std::chrono::seconds(1));
 
-  ROS_WARN("[Traj server]: ready.");
+  RCLCPP_WARN(node->get_logger(), "[Traj server]: ready.");
 
-  ros::spin();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }
