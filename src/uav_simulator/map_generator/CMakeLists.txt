@@ -51,6 +51,7 @@ endif()
 add_executable(random_forest src/random_forest_sensing.cpp)
 
 ament_target_dependencies(random_forest rclcpp std_msgs geometry_msgs nav_msgs pcl_conversions Eigen3 PCL)
+target_link_libraries(random_forest ${PCL_LIBRARIES})
 
 install(TARGETS random_forest
   DESTINATION lib/${PROJECT_NAME}
