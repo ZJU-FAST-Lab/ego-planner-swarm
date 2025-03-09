@@ -1,0 +1,26 @@
+name: Compile-test-amd64
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - '.github/workflows/build-amd64.yml'
+      - 'src/*'
+      
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - '.github/workflows/build-amd64.yml'
+      - 'src/*'
+
+jobs:
+  Compile-ego-planner-swarm-amd64:
+    runs-on: ubuntu-latest
+    steps:
+    -
+      name: Checkout
+      uses: actions/checkout@v3
+    -
+      name: Start to Compile
+      run: |
+        docker run -v `pwd`:/root/ego-planner-swarm --rm jasonxxxyyy/robotics:runtime-cuda11.4-ros1-amd64 /bin/bash -c "source /opt/ros/noetic/setup.bash && cd /root/ego-planner-swarm && catkin_make"
