@@ -4,6 +4,8 @@
   <arg name="map_size_z_"/>
 
   <arg name="odometry_topic"/>
+  <arg name="odom_topic_prefixed" default="true"/>
+  <arg name="odom_topic_full" default=""/>
   <arg name="camera_pose_topic"/>
   <arg name="depth_topic"/>
   <arg name="cloud_topic"/>
@@ -61,13 +63,15 @@
   <!-- <node pkg="ego_planner" name="ego_planner_node" type="ego_planner_node" output="screen" launch-prefix="valgrind"> -->
   <node pkg="ego_planner" name="drone_$(arg drone_id)_ego_planner_node" type="ego_planner_node" output="screen">
   
-    <remap from="~odom_world" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
+    <remap if="$(arg odom_topic_prefixed)" from="~odom_world" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
+    <remap unless="$(arg odom_topic_prefixed)" from="~odom_world" to="$(arg odom_topic_full)"/>
     <remap from="~planning/bspline" to = "/drone_$(arg drone_id)_planning/bspline"/>
     <remap from="~planning/data_display" to = "/drone_$(arg drone_id)_planning/data_display"/>
     <remap from="~planning/broadcast_bspline_from_planner" to = "/broadcast_bspline"/>
     <remap from="~planning/broadcast_bspline_to_planner" to = "/broadcast_bspline"/>
 
-    <remap from="~grid_map/odom" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
+    <remap if="$(arg odom_topic_prefixed)" from="~grid_map/odom" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
+    <remap unless="$(arg odom_topic_prefixed)" from="~grid_map/odom" to="$(arg odom_topic_full)"/>
     <remap from="~grid_map/cloud" to="/drone_$(arg drone_id)_$(arg cloud_topic)"/>
     <remap from="~grid_map/pose"   to = "/drone_$(arg drone_id)_$(arg camera_pose_topic)"/> 
     <remap if="$(arg depth_topic_prefixed)" from="~grid_map/depth" to = "/drone_$(arg drone_id)_$(arg depth_topic)"/>
