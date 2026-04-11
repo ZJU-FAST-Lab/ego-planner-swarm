@@ -10,6 +10,7 @@
   <!-- TEMP: This topic exists only when host-side validation uses the static odom publisher. -->
   <arg name="temp_odom_topic" default="oakd/temp_odom"/>
   <arg name="real_odom_topic" default="/vins_estimator/odometry"/>
+  <arg name="extrinsic_source" default="param"/>
   <arg name="extrinsic_topic" default="/vins_estimator/extrinsic"/>
 
   <!-- TEMP: Host-side validation uses manually filled camera intrinsics. -->
@@ -92,7 +93,7 @@
     <!-- TEMP: Host-side validation uses the raw external OAK-D topic name. -->
     <arg name="depth_topic_full" value="/$(arg depth_topic)"/>
     <arg name="cloud_topic" value="unused_cloud"/>
-    <arg name="extrinsic_source" value="param"/>
+    <arg name="extrinsic_source" value="$(arg extrinsic_source)"/>
     <arg name="extrinsic_topic" value="$(arg extrinsic_topic)"/>
     <arg name="cx" value="$(arg camera_cx)"/>
     <arg name="cy" value="$(arg camera_cy)"/>

@@ -35,6 +35,27 @@ roslaunch ego_planner run_oakd_depth_odom.launch \
   cam_qx:=<qx> cam_qy:=<qy> cam_qz:=<qz> cam_qw:=<qw>
 ```
 
+### FCU / optical-flow odom input
+If the flight controller already publishes `nav_msgs/Odometry`, use:
+```bash
+roslaunch ego_planner run_oakd_fcu_planner.launch \
+  depth_topic:=oak/stereo/image_raw \
+  fcu_odom_topic:=/mavros/local_position/odom
+```
+
+If the flight controller only publishes `geometry_msgs/PoseStamped`, enable the adapter:
+```bash
+roslaunch ego_planner run_oakd_fcu_planner.launch \
+  depth_topic:=oak/stereo/image_raw \
+  use_pose_adapter:=true \
+  fcu_pose_topic:=/mavros/local_position/pose
+```
+
+The adapter republishes a standard odom topic for the planner:
+- Input pose: `geometry_msgs/PoseStamped`
+- Output odom: `nav_msgs/Odometry`
+- Twist: zeroed as a `TEMP` fallback until a real FCU odom topic is available
+
 ### Global waypoint interface
 ```bash
 roslaunch ego_planner run_oakd_depth_odom.launch \
@@ -60,6 +81,11 @@ flight_type:=2
 - Real odom interface:
   - `use_temp_odom:=false`
   - `real_odom_topic:=/your/odometry`
+- FCU odom interface:
+  - `fcu_odom_topic:=/mavros/local_position/odom`
+  - `use_pose_adapter:=true`
+  - `fcu_pose_topic:=/mavros/local_position/pose`
+  - `adapted_odom_topic:=/drone_0_fcu/odom`
 - Global waypoint interface:
   - `point_num`
   - `point0_x/y/z` ... `point4_x/y/z`

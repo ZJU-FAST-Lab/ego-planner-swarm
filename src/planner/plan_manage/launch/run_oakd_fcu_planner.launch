@@ -1,0 +1,114 @@
+<launch>
+  <arg name="drone_id" default="0"/>
+
+  <arg name="map_size_x" default="20.0"/>
+  <arg name="map_size_y" default="20.0"/>
+  <arg name="map_size_z" default="5.0"/>
+
+  <arg name="depth_topic" default="oak/stereo/image_raw"/>
+
+  <arg name="use_pose_adapter" default="false"/>
+  <arg name="fcu_odom_topic" default="/mavros/local_position/odom"/>
+  <arg name="fcu_pose_topic" default="/mavros/local_position/pose"/>
+  <arg name="adapted_odom_topic" default="/drone_$(arg drone_id)_fcu/odom"/>
+  <arg name="odom_frame_id" default="world"/>
+  <arg name="child_frame_id" default="drone_$(arg drone_id)_base_link"/>
+
+  <arg name="extrinsic_source" default="param"/>
+  <arg name="extrinsic_topic" default="/vins_estimator/extrinsic"/>
+
+  <!-- TEMP: Host-side validation uses manually filled camera intrinsics. -->
+  <arg name="camera_fx" default="387.229248046875"/>
+  <arg name="camera_fy" default="387.229248046875"/>
+  <arg name="camera_cx" default="321.04638671875"/>
+  <arg name="camera_cy" default="243.44969177246094"/>
+  <!-- TEMP: Host-side validation uses manually tuned depth parameters. -->
+  <arg name="depth_scale" default="1000.0"/>
+  <arg name="depth_min" default="0.2"/>
+  <arg name="depth_max" default="5.0"/>
+  <arg name="skip_pixel" default="2"/>
+
+  <!-- TEMP: Manual camera-to-body extrinsic for host-side validation. -->
+  <arg name="cam_tx" default="0.0"/>
+  <arg name="cam_ty" default="0.0"/>
+  <arg name="cam_tz" default="0.0"/>
+  <arg name="cam_qx" default="0.5"/>
+  <arg name="cam_qy" default="-0.5"/>
+  <arg name="cam_qz" default="0.5"/>
+  <arg name="cam_qw" default="-0.5"/>
+
+  <arg name="flight_type" default="2"/>
+  <arg name="point_num" default="1"/>
+  <arg name="point0_x" default="4.0"/>
+  <arg name="point0_y" default="0.0"/>
+  <arg name="point0_z" default="1.0"/>
+  <arg name="point1_x" default="0.0"/>
+  <arg name="point1_y" default="0.0"/>
+  <arg name="point1_z" default="1.0"/>
+  <arg name="point2_x" default="0.0"/>
+  <arg name="point2_y" default="0.0"/>
+  <arg name="point2_z" default="1.0"/>
+  <arg name="point3_x" default="0.0"/>
+  <arg name="point3_y" default="0.0"/>
+  <arg name="point3_z" default="1.0"/>
+  <arg name="point4_x" default="0.0"/>
+  <arg name="point4_y" default="0.0"/>
+  <arg name="point4_z" default="1.0"/>
+
+  <node if="$(arg use_pose_adapter)" pkg="plan_env" type="pose_odom_adapter" name="drone_$(arg drone_id)_fcu_pose_odom_adapter" output="screen">
+    <param name="input_type" value="pose"/>
+    <param name="input_topic" value="$(arg fcu_pose_topic)"/>
+    <param name="output_topic" value="$(arg adapted_odom_topic)"/>
+    <param name="frame_id" value="$(arg odom_frame_id)"/>
+    <param name="child_frame_id" value="$(arg child_frame_id)"/>
+    <param name="override_frame_id" value="true"/>
+    <param name="override_child_frame_id" value="true"/>
+    <!-- TEMP: Pose-only FCU input publishes zero twist until a real odom source is available. -->
+    <param name="zero_twist_on_pose_input" value="true"/>
+  </node>
+
+  <include file="$(find ego_planner)/launch/run_oakd_depth_odom.launch">
+    <arg name="drone_id" value="$(arg drone_id)"/>
+    <arg name="map_size_x" value="$(arg map_size_x)"/>
+    <arg name="map_size_y" value="$(arg map_size_y)"/>
+    <arg name="map_size_z" value="$(arg map_size_z)"/>
+    <arg name="depth_topic" value="$(arg depth_topic)"/>
+    <arg name="use_temp_odom" value="false"/>
+    <arg unless="$(arg use_pose_adapter)" name="real_odom_topic" value="$(arg fcu_odom_topic)"/>
+    <arg if="$(arg use_pose_adapter)" name="real_odom_topic" value="$(arg adapted_odom_topic)"/>
+    <arg name="extrinsic_source" value="$(arg extrinsic_source)"/>
+    <arg name="extrinsic_topic" value="$(arg extrinsic_topic)"/>
+    <arg name="camera_fx" value="$(arg camera_fx)"/>
+    <arg name="camera_fy" value="$(arg camera_fy)"/>
+    <arg name="camera_cx" value="$(arg camera_cx)"/>
+    <arg name="camera_cy" value="$(arg camera_cy)"/>
+    <arg name="depth_scale" value="$(arg depth_scale)"/>
+    <arg name="depth_min" value="$(arg depth_min)"/>
+    <arg name="depth_max" value="$(arg depth_max)"/>
+    <arg name="skip_pixel" value="$(arg skip_pixel)"/>
+    <arg name="cam_tx" value="$(arg cam_tx)"/>
+    <arg name="cam_ty" value="$(arg cam_ty)"/>
+    <arg name="cam_tz" value="$(arg cam_tz)"/>
+    <arg name="cam_qx" value="$(arg cam_qx)"/>
+    <arg name="cam_qy" value="$(arg cam_qy)"/>
+    <arg name="cam_qz" value="$(arg cam_qz)"/>
+    <arg name="cam_qw" value="$(arg cam_qw)"/>
+    <arg name="flight_type" value="$(arg flight_type)"/>
+    <arg name="point_num" value="$(arg point_num)"/>
+    <arg name="point0_x" value="$(arg point0_x)"/>
+    <arg name="point0_y" value="$(arg point0_y)"/>
+    <arg name="point0_z" value="$(arg point0_z)"/>
+    <arg name="point1_x" value="$(arg point1_x)"/>
+    <arg name="point1_y" value="$(arg point1_y)"/>
+    <arg name="point1_z" value="$(arg point1_z)"/>
+    <arg name="point2_x" value="$(arg point2_x)"/>
+    <arg name="point2_y" value="$(arg point2_y)"/>
+    <arg name="point2_z" value="$(arg point2_z)"/>
+    <arg name="point3_x" value="$(arg point3_x)"/>
+    <arg name="point3_y" value="$(arg point3_y)"/>
+    <arg name="point3_z" value="$(arg point3_z)"/>
+    <arg name="point4_x" value="$(arg point4_x)"/>
+    <arg name="point4_y" value="$(arg point4_y)"/>
+    <arg name="point4_z" value="$(arg point4_z)"/>
+  </include>
+</launch>

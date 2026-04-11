@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   nav_msgs
+  geometry_msgs
   visualization_msgs
   cv_bridge
   message_filters
@@ -63,5 +64,12 @@ add_executable(static_odom_publisher
     src/static_odom_publisher.cpp
 )
 target_link_libraries(static_odom_publisher
+    ${catkin_LIBRARIES}
+)
+
+add_executable(pose_odom_adapter
+    src/pose_odom_adapter.cpp
+)
+target_link_libraries(pose_odom_adapter
     ${catkin_LIBRARIES}
 )
