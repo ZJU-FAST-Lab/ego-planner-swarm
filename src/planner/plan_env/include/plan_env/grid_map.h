@@ -57,6 +57,10 @@ struct MappingParameters {
 
   /* camera parameters */
   double cx_, cy_, fx_, fy_;
+  std::string extrinsic_source_;
+  std::string extrinsic_topic_;
+  double cam_tx_, cam_ty_, cam_tz_;
+  double cam_qx_, cam_qy_, cam_qz_, cam_qw_;
 
   /* time out */
   double odom_depth_timeout_;
@@ -109,6 +113,13 @@ struct MappingData {
   bool occ_need_update_, local_updated_;
   bool has_first_depth_;
   bool has_odom_, has_cloud_;
+  bool has_extrinsic_;
+  bool logged_depth_;
+  bool logged_odom_;
+  bool logged_extrinsic_;
+  bool warned_missing_depth_;
+  bool warned_missing_odom_;
+  bool warned_missing_extrinsic_;
 
   // odom_depth_timeout_
   ros::Time last_occ_update_time_;
@@ -208,6 +219,8 @@ private:
   void projectDepthImage();
   void raycastProcess();
   void clearAndInflateLocalMap();
+  void loadExtrinsicFromParam();
+  bool canUseDepthFusion() const;
 
   inline void inflatePoint(const Eigen::Vector3i& pt, int step, vector<Eigen::Vector3i>& pts);
   int setCacheOccupancy(Eigen::Vector3d pos, int occ);

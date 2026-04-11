@@ -3,6 +3,50 @@
 // #define current_img_ md_.depth_image_[image_cnt_ & 1]
 // #define last_img_ md_.depth_image_[!(image_cnt_ & 1)]
 
+void GridMap::loadExtrinsicFromParam()
+{
+  node_.param("grid_map/cam_tx", mp_.cam_tx_, 0.0);
+  node_.param("grid_map/cam_ty", mp_.cam_ty_, 0.0);
+  node_.param("grid_map/cam_tz", mp_.cam_tz_, 0.0);
+  node_.param("grid_map/cam_qx", mp_.cam_qx_, 0.0);
+  node_.param("grid_map/cam_qy", mp_.cam_qy_, 0.0);
+  node_.param("grid_map/cam_qz", mp_.cam_qz_, 0.0);
+  node_.param("grid_map/cam_qw", mp_.cam_qw_, 1.0);
+
+  Eigen::Quaterniond cam_q(mp_.cam_qw_, mp_.cam_qx_, mp_.cam_qy_, mp_.cam_qz_);
+  if (cam_q.norm() < 1e-6)
+  {
+    ROS_ERROR("[grid_map] Invalid extrinsic quaternion from parameters.");
+    md_.has_extrinsic_ = false;
+    return;
+  }
+
+  cam_q.normalize();
+  md_.cam2body_.setIdentity();
+  md_.cam2body_.block<3, 3>(0, 0) = cam_q.toRotationMatrix();
+  md_.cam2body_(0, 3) = mp_.cam_tx_;
+  md_.cam2body_(1, 3) = mp_.cam_ty_;
+  md_.cam2body_(2, 3) = mp_.cam_tz_;
+  md_.has_extrinsic_ = true;
+
+  if (!md_.logged_extrinsic_)
+  {
+    ROS_INFO("[grid_map] Loaded extrinsic from parameters. t=(%.3f, %.3f, %.3f), q=(%.3f, %.3f, %.3f, %.3f)",
+             mp_.cam_tx_, mp_.cam_ty_, mp_.cam_tz_, cam_q.x(), cam_q.y(), cam_q.z(), cam_q.w());
+    md_.logged_extrinsic_ = true;
+  }
+}
+
+bool GridMap::canUseDepthFusion() const
+{
+  if (mp_.pose_type_ != ODOMETRY)
+  {
+    return true;
+  }
+
+  return md_.has_odom_ && md_.has_extrinsic_;
+}
+
 void GridMap::initMap(ros::NodeHandle &nh)
 {
   node_ = nh;
@@ -22,6 +66,8 @@ void GridMap::initMap(ros::NodeHandle &nh)
   node_.param("grid_map/fy", mp_.fy_, -1.0);
   node_.param("grid_map/cx", mp_.cx_, -1.0);
   node_.param("grid_map/cy", mp_.cy_, -1.0);
+  node_.param("grid_map/extrinsic_source", mp_.extrinsic_source_, string("param"));
+  node_.param("grid_map/extrinsic_topic", mp_.extrinsic_topic_, string("/vins_estimator/extrinsic"));
 
   node_.param("grid_map/use_depth_filter", mp_.use_depth_filter_, true);
   node_.param("grid_map/depth_filter_tolerance", mp_.depth_filter_tolerance_, -1.0);
@@ -98,16 +144,32 @@ void GridMap::initMap(ros::NodeHandle &nh)
   md_.proj_points_.resize(640 * 480 / mp_.skip_pixel_ / mp_.skip_pixel_);
   md_.proj_points_cnt = 0;
 
-  md_.cam2body_ << 0.0, 0.0, 1.0, 0.0,
-      -1.0, 0.0, 0.0, 0.0,
-      0.0, -1.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 1.0;
+  md_.cam2body_.setIdentity();
+  md_.has_extrinsic_ = false;
+  md_.logged_depth_ = false;
+  md_.logged_odom_ = false;
+  md_.logged_extrinsic_ = false;
+  md_.warned_missing_depth_ = false;
+  md_.warned_missing_odom_ = false;
+  md_.warned_missing_extrinsic_ = false;
+
+  // TEMP: Host validation uses a manually provided camera extrinsic.
+  loadExtrinsicFromParam();
 
   /* init callback */
 
   depth_sub_.reset(new message_filters::Subscriber<sensor_msgs::Image>(node_, "grid_map/depth", 50));
-  extrinsic_sub_ = node_.subscribe<nav_msgs::Odometry>(
-      "/vins_estimator/extrinsic", 10, &GridMap::extrinsicCallback, this); //sub
+  if (mp_.extrinsic_source_ == "topic" || mp_.extrinsic_source_ == "param_and_topic")
+  {
+    extrinsic_sub_ = node_.subscribe<nav_msgs::Odometry>(
+        mp_.extrinsic_topic_, 10, &GridMap::extrinsicCallback, this);
+    ROS_INFO("[grid_map] Waiting for extrinsic topic: %s", mp_.extrinsic_topic_.c_str());
+  }
+
+  if (!md_.has_extrinsic_ && mp_.extrinsic_source_ == "topic")
+  {
+    ROS_WARN("[grid_map] Extrinsic is topic-only and has not arrived yet.");
+  }
 
   if (mp_.pose_type_ == POSE_STAMPED)
   {
@@ -153,6 +215,14 @@ void GridMap::initMap(ros::NodeHandle &nh)
 
   md_.flag_depth_odom_timeout_ = false;
   md_.flag_use_depth_fusion = false;
+
+  ROS_INFO("[grid_map] pose_type=%d, frame_id=%s, depth scale=%.3f, depth range=[%.3f, %.3f], skip_pixel=%d",
+           mp_.pose_type_, mp_.frame_id_.c_str(), mp_.k_depth_scaling_factor_,
+           mp_.depth_filter_mindist_, mp_.depth_filter_maxdist_, mp_.skip_pixel_);
+  if (mp_.pose_type_ == ODOMETRY && !md_.has_extrinsic_)
+  {
+    ROS_WARN("[grid_map] ODOMETRY mode requires a valid camera extrinsic.");
+  }
 
   // rand_noise_ = uniform_real_distribution<double>(-0.2, 0.2);
   // rand_noise2_ = normal_distribution<double>(0, 0.2);
@@ -217,11 +287,19 @@ void GridMap::projectDepthImage()
   // md_.proj_points_.clear();
   md_.proj_points_cnt = 0;
 
-  uint16_t *row_ptr;
   // int cols = current_img_.cols, rows = current_img_.rows;
   int cols = md_.depth_image_.cols;
   int rows = md_.depth_image_.rows;
   int skip_pix = mp_.skip_pixel_;
+
+  const int estimated_point_num =
+      std::max(1, ((rows + skip_pix - 1) / skip_pix) * ((cols + skip_pix - 1) / skip_pix) * 2);
+  if ((int)md_.proj_points_.size() < estimated_point_num)
+  {
+    md_.proj_points_.resize(estimated_point_num);
+    ROS_INFO("[grid_map] Resized projection buffer to %d for depth image %dx%d.",
+             estimated_point_num, cols, rows);
+  }
 
   double depth;
 
@@ -231,7 +309,7 @@ void GridMap::projectDepthImage()
   {
     for (int v = 0; v < rows; v+=skip_pix)
     {
-      row_ptr = md_.depth_image_.ptr<uint16_t>(v);
+      uint16_t *row_ptr = md_.depth_image_.ptr<uint16_t>(v);
 
       for (int u = 0; u < cols; u+=skip_pix)
       {
@@ -266,14 +344,12 @@ void GridMap::projectDepthImage()
 
       for (int v = mp_.depth_filter_margin_; v < rows - mp_.depth_filter_margin_; v += mp_.skip_pixel_)
       {
-        row_ptr = md_.depth_image_.ptr<uint16_t>(v) + mp_.depth_filter_margin_;
-
         for (int u = mp_.depth_filter_margin_; u < cols - mp_.depth_filter_margin_;
              u += mp_.skip_pixel_)
         {
+          uint16_t *row_ptr = md_.depth_image_.ptr<uint16_t>(v) + u;
 
           depth = (*row_ptr) * inv_factor;
-          row_ptr = row_ptr + mp_.skip_pixel_;
 
           // filter depth
           // depth += rand_noise_(eng_);
@@ -663,13 +739,34 @@ void GridMap::visCallback(const ros::TimerEvent & /*event*/)
 void GridMap::updateOccupancyCallback(const ros::TimerEvent & /*event*/)
 {
   if (md_.last_occ_update_time_.toSec() < 1.0 ) md_.last_occ_update_time_ = ros::Time::now();
+
+  if (mp_.pose_type_ == ODOMETRY)
+  {
+    if (!md_.has_odom_ && !md_.warned_missing_odom_)
+    {
+      ROS_WARN("[grid_map] Waiting for odom on grid_map/odom before depth fusion can start.");
+      md_.warned_missing_odom_ = true;
+    }
+    if (!md_.has_extrinsic_ && !md_.warned_missing_extrinsic_)
+    {
+      ROS_WARN("[grid_map] Waiting for camera extrinsic. Configure grid_map/extrinsic_source or publish %s.",
+               mp_.extrinsic_topic_.c_str());
+      md_.warned_missing_extrinsic_ = true;
+    }
+  }
+  if (!md_.has_first_depth_ && !md_.warned_missing_depth_)
+  {
+    ROS_WARN("[grid_map] Waiting for depth image on grid_map/depth.");
+    md_.warned_missing_depth_ = true;
+  }
   
   if (!md_.occ_need_update_)
   {
     if ( md_.flag_use_depth_fusion && (ros::Time::now() - md_.last_occ_update_time_).toSec() > mp_.odom_depth_timeout_ )
     {
-      ROS_ERROR("odom or depth lost! ros::Time::now()=%f, md_.last_occ_update_time_=%f, mp_.odom_depth_timeout_=%f", 
-        ros::Time::now().toSec(), md_.last_occ_update_time_.toSec(), mp_.odom_depth_timeout_);
+      ROS_ERROR("odom or depth lost! ros::Time::now()=%f, md_.last_occ_update_time_=%f, mp_.odom_depth_timeout_=%f, has_odom=%d, has_extrinsic=%d, has_first_depth=%d",
+        ros::Time::now().toSec(), md_.last_occ_update_time_.toSec(), mp_.odom_depth_timeout_,
+        md_.has_odom_, md_.has_extrinsic_, md_.has_first_depth_);
       md_.flag_depth_odom_timeout_ = true;
     }
     return;
@@ -716,6 +813,13 @@ void GridMap::depthPoseCallback(const sensor_msgs::ImageConstPtr &img,
     (cv_ptr->image).convertTo(cv_ptr->image, CV_16UC1, mp_.k_depth_scaling_factor_);
   }
   cv_ptr->image.copyTo(md_.depth_image_);
+  if (!md_.logged_depth_)
+  {
+    ROS_INFO("[grid_map] Received first depth frame. encoding=%s, size=%dx%d, scale=%.3f",
+             img->encoding.c_str(), img->width, img->height, mp_.k_depth_scaling_factor_);
+    md_.logged_depth_ = true;
+    md_.warned_missing_depth_ = false;
+  }
 
   // std::cout << "depth: " << md_.depth_image_.cols << ", " << md_.depth_image_.rows << std::endl;
 
@@ -729,6 +833,7 @@ void GridMap::depthPoseCallback(const sensor_msgs::ImageConstPtr &img,
   if (isInMap(md_.camera_pos_))
   {
     md_.has_odom_ = true;
+    md_.warned_missing_odom_ = false;
     md_.update_num_ += 1;
     md_.occ_need_update_ = true;
   }
@@ -750,6 +855,13 @@ void GridMap::odomCallback(const nav_msgs::OdometryConstPtr &odom)
   md_.camera_pos_(2) = odom->pose.pose.position.z;
 
   md_.has_odom_ = true;
+  if (!md_.logged_odom_)
+  {
+    ROS_INFO("[grid_map] Received first odom frame at position (%.3f, %.3f, %.3f).",
+             md_.camera_pos_(0), md_.camera_pos_(1), md_.camera_pos_(2));
+    md_.logged_odom_ = true;
+  }
+  md_.warned_missing_odom_ = false;
 }
 
 void GridMap::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &img)
@@ -980,17 +1092,44 @@ void GridMap::extrinsicCallback(const nav_msgs::OdometryConstPtr &odom)
                                                      odom->pose.pose.orientation.x,
                                                      odom->pose.pose.orientation.y,
                                                      odom->pose.pose.orientation.z);
+  if (cam2body_q.norm() < 1e-6)
+  {
+    ROS_ERROR("[grid_map] Received invalid extrinsic quaternion from topic %s.",
+              mp_.extrinsic_topic_.c_str());
+    return;
+  }
+  cam2body_q.normalize();
   Eigen::Matrix3d cam2body_r_m = cam2body_q.toRotationMatrix();
   md_.cam2body_.block<3, 3>(0, 0) = cam2body_r_m;
   md_.cam2body_(0, 3) = odom->pose.pose.position.x;
   md_.cam2body_(1, 3) = odom->pose.pose.position.y;
   md_.cam2body_(2, 3) = odom->pose.pose.position.z;
   md_.cam2body_(3, 3) = 1.0;
+  md_.has_extrinsic_ = true;
+  md_.warned_missing_extrinsic_ = false;
+  if (!md_.logged_extrinsic_)
+  {
+    ROS_INFO("[grid_map] Received first extrinsic frame from %s.", mp_.extrinsic_topic_.c_str());
+    md_.logged_extrinsic_ = true;
+  }
 }
 
 void GridMap::depthOdomCallback(const sensor_msgs::ImageConstPtr &img,
                                 const nav_msgs::OdometryConstPtr &odom)
 {
+  md_.has_odom_ = true;
+  md_.warned_missing_odom_ = false;
+  if (!md_.logged_odom_)
+  {
+    ROS_INFO("[grid_map] Received first synchronized odom frame.");
+    md_.logged_odom_ = true;
+  }
+
+  if (!canUseDepthFusion())
+  {
+    return;
+  }
+
   /* get pose */
   Eigen::Quaterniond body_q = Eigen::Quaterniond(odom->pose.pose.orientation.w,
                                                  odom->pose.pose.orientation.x,
@@ -1018,6 +1157,14 @@ void GridMap::depthOdomCallback(const sensor_msgs::ImageConstPtr &img,
     (cv_ptr->image).convertTo(cv_ptr->image, CV_16UC1, mp_.k_depth_scaling_factor_);
   }
   cv_ptr->image.copyTo(md_.depth_image_);
+  if (!md_.logged_depth_)
+  {
+    ROS_INFO("[grid_map] Received first synchronized depth frame. encoding=%s, size=%dx%d, scale=%.3f",
+             img->encoding.c_str(), img->width, img->height, mp_.k_depth_scaling_factor_);
+    md_.logged_depth_ = true;
+  }
+  md_.has_first_depth_ = true;
+  md_.warned_missing_depth_ = false;
 
   md_.occ_need_update_ = true;
   md_.flag_use_depth_fusion = true;

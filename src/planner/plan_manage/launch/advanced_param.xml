@@ -7,11 +7,26 @@
   <arg name="camera_pose_topic"/>
   <arg name="depth_topic"/>
   <arg name="cloud_topic"/>
+  <arg name="depth_topic_prefixed" default="true"/>
+  <arg name="depth_topic_full" default=""/>
+  <arg name="extrinsic_source" default="param"/>
+  <arg name="extrinsic_topic" default="/vins_estimator/extrinsic"/>
 
   <arg name="cx"/>
   <arg name="cy"/>
   <arg name="fx"/>
   <arg name="fy"/>
+  <arg name="depth_filter_maxdist" default="5.0"/>
+  <arg name="depth_filter_mindist" default="0.2"/>
+  <arg name="k_depth_scaling_factor" default="1000.0"/>
+  <arg name="skip_pixel" default="2"/>
+  <arg name="cam_tx" default="0.0"/>
+  <arg name="cam_ty" default="0.0"/>
+  <arg name="cam_tz" default="0.0"/>
+  <arg name="cam_qx" default="0.0"/>
+  <arg name="cam_qy" default="0.0"/>
+  <arg name="cam_qz" default="0.0"/>
+  <arg name="cam_qw" default="1.0"/>
 
   <arg name="max_vel"/>
   <arg name="max_acc"/>
@@ -55,7 +70,10 @@
     <remap from="~grid_map/odom" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
     <remap from="~grid_map/cloud" to="/drone_$(arg drone_id)_$(arg cloud_topic)"/>
     <remap from="~grid_map/pose"   to = "/drone_$(arg drone_id)_$(arg camera_pose_topic)"/> 
-    <remap from="~grid_map/depth" to = "/drone_$(arg drone_id)_$(arg depth_topic)"/>
+    <remap if="$(arg depth_topic_prefixed)" from="~grid_map/depth" to = "/drone_$(arg drone_id)_$(arg depth_topic)"/>
+    <remap unless="$(arg depth_topic_prefixed)" from="~grid_map/depth" to = "$(arg depth_topic_full)"/>
+    <remap from="~grid_map/occupancy" to="/drone_$(arg drone_id)_grid_map/occupancy"/>
+    <remap from="~grid_map/occupancy_inflate" to="/drone_$(arg drone_id)_grid_map/occupancy_inflate"/>
     
 
     <!-- planning fsm -->
@@ -100,14 +118,24 @@
     <param name="grid_map/cy" value="$(arg cy)"/>
     <param name="grid_map/fx" value="$(arg fx)"/>
     <param name="grid_map/fy" value="$(arg fy)"/>
+    <param name="grid_map/extrinsic_source" value="$(arg extrinsic_source)"/>
+    <param name="grid_map/extrinsic_topic" value="$(arg extrinsic_topic)"/>
+    <!-- TEMP: Host validation uses a manually filled camera extrinsic. -->
+    <param name="grid_map/cam_tx" value="$(arg cam_tx)"/>
+    <param name="grid_map/cam_ty" value="$(arg cam_ty)"/>
+    <param name="grid_map/cam_tz" value="$(arg cam_tz)"/>
+    <param name="grid_map/cam_qx" value="$(arg cam_qx)"/>
+    <param name="grid_map/cam_qy" value="$(arg cam_qy)"/>
+    <param name="grid_map/cam_qz" value="$(arg cam_qz)"/>
+    <param name="grid_map/cam_qw" value="$(arg cam_qw)"/>
     <!-- depth filter -->
     <param name="grid_map/use_depth_filter" value="true"/>
     <param name="grid_map/depth_filter_tolerance" value="0.15"/>
-    <param name="grid_map/depth_filter_maxdist"   value="5.0"/>
-    <param name="grid_map/depth_filter_mindist"   value="0.2"/>
+    <param name="grid_map/depth_filter_maxdist"   value="$(arg depth_filter_maxdist)"/>
+    <param name="grid_map/depth_filter_mindist"   value="$(arg depth_filter_mindist)"/>
     <param name="grid_map/depth_filter_margin"    value="2"/>
-    <param name="grid_map/k_depth_scaling_factor" value="1000.0"/>
-    <param name="grid_map/skip_pixel" value="2"/>
+    <param name="grid_map/k_depth_scaling_factor" value="$(arg k_depth_scaling_factor)"/>
+    <param name="grid_map/skip_pixel" value="$(arg skip_pixel)"/>
     <!-- local fusion -->
     <param name="grid_map/p_hit"  value="0.65"/>
     <param name="grid_map/p_miss" value="0.35"/>
@@ -120,7 +148,7 @@
     <param name="grid_map/virtual_ceil_height"   value="2.9"/>
     <param name="grid_map/visualization_truncate_height"   value="1.8"/>
     <param name="grid_map/show_occ_time"  value="false"/>
-    <param name="grid_map/pose_type"     value="1"/>  
+    <param name="grid_map/pose_type"     value="2"/>  
     <param name="grid_map/frame_id"      value="world"/>
 
   <!-- planner manager -->

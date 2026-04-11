@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  nav_msgs
   visualization_msgs
   cv_bridge
   message_filters
@@ -57,3 +58,10 @@ add_executable(obj_generator
 target_link_libraries(obj_generator 
     ${catkin_LIBRARIES}
     )
+
+add_executable(static_odom_publisher
+    src/static_odom_publisher.cpp
+)
+target_link_libraries(static_odom_publisher
+    ${catkin_LIBRARIES}
+)

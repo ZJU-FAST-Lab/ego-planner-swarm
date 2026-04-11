@@ -1,0 +1,119 @@
+<launch>
+  <arg name="drone_id" default="0"/>
+
+  <arg name="map_size_x" default="20.0"/>
+  <arg name="map_size_y" default="20.0"/>
+  <arg name="map_size_z" default="5.0"/>
+
+  <arg name="depth_topic" default="oakd/stereo/depth"/>
+  <arg name="odom_topic" default="oakd/temp_odom"/>
+  <arg name="extrinsic_topic" default="/vins_estimator/extrinsic"/>
+
+  <!-- TEMP: Host-side validation uses manually filled camera intrinsics. -->
+  <arg name="camera_fx" default="387.229248046875"/>
+  <arg name="camera_fy" default="387.229248046875"/>
+  <arg name="camera_cx" default="321.04638671875"/>
+  <arg name="camera_cy" default="243.44969177246094"/>
+  <!-- TEMP: Host-side validation uses manually tuned depth parameters. -->
+  <arg name="depth_scale" default="1000.0"/>
+  <arg name="depth_min" default="0.2"/>
+  <arg name="depth_max" default="5.0"/>
+  <arg name="skip_pixel" default="2"/>
+
+  <!-- TEMP: Static odom is only for host-side validation and must be replaced on the aircraft. -->
+  <arg name="static_odom_x" default="0.0"/>
+  <arg name="static_odom_y" default="0.0"/>
+  <arg name="static_odom_z" default="1.0"/>
+  <arg name="static_odom_qx" default="0.0"/>
+  <arg name="static_odom_qy" default="0.0"/>
+  <arg name="static_odom_qz" default="0.0"/>
+  <arg name="static_odom_qw" default="1.0"/>
+  <arg name="static_odom_rate" default="20.0"/>
+
+  <!-- TEMP: Manual camera-to-body extrinsic for host-side validation. -->
+  <arg name="cam_tx" default="0.0"/>
+  <arg name="cam_ty" default="0.0"/>
+  <arg name="cam_tz" default="0.0"/>
+  <!-- TEMP: This default rotation matches the repository's original optical-frame assumption. -->
+  <arg name="cam_qx" default="0.5"/>
+  <arg name="cam_qy" default="-0.5"/>
+  <arg name="cam_qz" default="0.5"/>
+  <arg name="cam_qw" default="-0.5"/>
+
+  <arg name="target_x" default="4.0"/>
+  <arg name="target_y" default="0.0"/>
+  <arg name="target_z" default="1.0"/>
+
+  <node pkg="plan_env" type="static_odom_publisher" name="oakd_static_odom_publisher" output="screen">
+    <param name="odom_topic" value="/drone_$(arg drone_id)_$(arg odom_topic)"/>
+    <param name="frame_id" value="world"/>
+    <param name="child_frame_id" value="drone_$(arg drone_id)_base_link"/>
+    <param name="publish_rate" value="$(arg static_odom_rate)"/>
+    <param name="pos_x" value="$(arg static_odom_x)"/>
+    <param name="pos_y" value="$(arg static_odom_y)"/>
+    <param name="pos_z" value="$(arg static_odom_z)"/>
+    <param name="quat_x" value="$(arg static_odom_qx)"/>
+    <param name="quat_y" value="$(arg static_odom_qy)"/>
+    <param name="quat_z" value="$(arg static_odom_qz)"/>
+    <param name="quat_w" value="$(arg static_odom_qw)"/>
+  </node>
+
+  <include file="$(find ego_planner)/launch/advanced_param.xml">
+    <arg name="drone_id" value="$(arg drone_id)"/>
+    <arg name="map_size_x_" value="$(arg map_size_x)"/>
+    <arg name="map_size_y_" value="$(arg map_size_y)"/>
+    <arg name="map_size_z_" value="$(arg map_size_z)"/>
+    <arg name="odometry_topic" value="$(arg odom_topic)"/>
+    <arg name="camera_pose_topic" value="unused_camera_pose"/>
+    <arg name="depth_topic" value="$(arg depth_topic)"/>
+    <arg name="depth_topic_prefixed" value="false"/>
+    <!-- TEMP: Host-side validation uses the raw external OAK-D topic name. -->
+    <arg name="depth_topic_full" value="/$(arg depth_topic)"/>
+    <arg name="cloud_topic" value="unused_cloud"/>
+    <arg name="extrinsic_source" value="param"/>
+    <arg name="extrinsic_topic" value="$(arg extrinsic_topic)"/>
+    <arg name="cx" value="$(arg camera_cx)"/>
+    <arg name="cy" value="$(arg camera_cy)"/>
+    <arg name="fx" value="$(arg camera_fx)"/>
+    <arg name="fy" value="$(arg camera_fy)"/>
+    <arg name="depth_filter_maxdist" value="$(arg depth_max)"/>
+    <arg name="depth_filter_mindist" value="$(arg depth_min)"/>
+    <arg name="k_depth_scaling_factor" value="$(arg depth_scale)"/>
+    <arg name="skip_pixel" value="$(arg skip_pixel)"/>
+    <arg name="cam_tx" value="$(arg cam_tx)"/>
+    <arg name="cam_ty" value="$(arg cam_ty)"/>
+    <arg name="cam_tz" value="$(arg cam_tz)"/>
+    <arg name="cam_qx" value="$(arg cam_qx)"/>
+    <arg name="cam_qy" value="$(arg cam_qy)"/>
+    <arg name="cam_qz" value="$(arg cam_qz)"/>
+    <arg name="cam_qw" value="$(arg cam_qw)"/>
+    <arg name="max_vel" value="1.5"/>
+    <arg name="max_acc" value="2.5"/>
+    <arg name="planning_horizon" value="5.0"/>
+    <arg name="flight_type" value="2"/>
+    <arg name="use_distinctive_trajs" value="false"/>
+    <arg name="obj_num_set" value="0"/>
+    <arg name="point_num" value="1"/>
+    <arg name="point0_x" value="$(arg target_x)"/>
+    <arg name="point0_y" value="$(arg target_y)"/>
+    <arg name="point0_z" value="$(arg target_z)"/>
+    <arg name="point1_x" value="0.0"/>
+    <arg name="point1_y" value="0.0"/>
+    <arg name="point1_z" value="1.0"/>
+    <arg name="point2_x" value="0.0"/>
+    <arg name="point2_y" value="0.0"/>
+    <arg name="point2_z" value="1.0"/>
+    <arg name="point3_x" value="0.0"/>
+    <arg name="point3_y" value="0.0"/>
+    <arg name="point3_z" value="1.0"/>
+    <arg name="point4_x" value="0.0"/>
+    <arg name="point4_y" value="0.0"/>
+    <arg name="point4_z" value="1.0"/>
+  </include>
+
+  <node pkg="ego_planner" name="drone_$(arg drone_id)_traj_server" type="traj_server" output="screen">
+    <remap from="position_cmd" to="/drone_$(arg drone_id)_planning/pos_cmd"/>
+    <remap from="~planning/bspline" to="/drone_$(arg drone_id)_planning/bspline"/>
+    <param name="traj_server/time_forward" value="1.0" type="double"/>
+  </node>
+</launch>
