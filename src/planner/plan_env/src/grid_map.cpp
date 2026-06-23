@@ -1,5 +1,5 @@
 #include "plan_env/grid_map.h"
-
+#include <std_msgs/msg/empty.hpp>
 // #define current_img_ md_.depth_image_[image_cnt_ & 1]
 // #define last_img_ md_.depth_image_[!(image_cnt_ & 1)]
 
@@ -44,7 +44,7 @@ void GridMap::initMap(rclcpp::Node::SharedPtr node)
   node_->declare_parameter("grid_map/frame_id", "world");
   node_->declare_parameter("grid_map/local_map_margin", 1);
   node_->declare_parameter("grid_map/ground_height", 1.0);
-  node_->declare_parameter("grid_map/odom_depth_timeout", 1.0);
+  node_->declare_parameter("grid_map/odom_depth_timeout", 3.0);
 
   node_->get_parameter("grid_map/resolution", mp_.resolution_);
   node_->get_parameter("grid_map/map_size_x", x_size);
@@ -143,6 +143,22 @@ void GridMap::initMap(rclcpp::Node::SharedPtr node)
       "/vins_estimator/extrinsic", 10,
       std::bind(&GridMap::extrinsicCallback, this, std::placeholders::_1));
 
+  clear_map_sub_ = node_->create_subscription<std_msgs::msg::Empty>(
+      "/clear_map", 10,
+      [this](const std_msgs::msg::Empty::SharedPtr) {
+          this->resetBuffer();
+
+          // Forget sensor warm-up flags so the next depth/cloud frame is
+          // treated as the first one and triggers a full local-bound rebuild
+          // rather than appending onto stale residuals.
+          md_.has_first_depth_ = false;
+          md_.has_cloud_       = false;
+          md_.local_updated_   = true;  // Force visCallback to republish next tick
+
+          RCLCPP_INFO(node_->get_logger(),
+              "[/clear_map] Occupancy and inflate buffers wiped on external request.");
+      });
+      
   if (mp_.pose_type_ == POSE_STAMPED)
   {
     pose_sub_ = std::make_shared<message_filters::Subscriber<geometry_msgs::msg::PoseStamped>>(
