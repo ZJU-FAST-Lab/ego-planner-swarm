@@ -136,16 +136,16 @@ namespace ego_planner
       int count = 0;
       while (rclcpp::ok() && count++ < 1000)
       {
-        rclcpp::spin_some(node_);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        // rclcpp::spin_some(node_);  // removed: MultiThreadedExecutor handles callbacks in background
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
       RCLCPP_WARN(node_->get_logger(), "Waiting for trigger from [n3ctrl] from RC");
 
       while (rclcpp::ok() && (!have_odom_ || !have_trigger_))
       {
-        rclcpp::spin_some(node_);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        // rclcpp::spin_some(node_);  // removed: MultiThreadedExecutor handles callbacks in background
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
       readGivenWps();
@@ -205,14 +205,14 @@ namespace ego_planner
       have_new_target_ = true;
 
       /*** FSM状态转换 ***/
-      if (exec_state_ == WAIT_TARGET)
+      if (exec_state_ == INIT || exec_state_ == WAIT_TARGET || exec_state_ == EMERGENCY_STOP)
         changeFSMExecState(GEN_NEW_TRAJ, "TRIG");
       else
       {
         while (exec_state_ != EXEC_TRAJ)
         {
-          rclcpp::spin_some(node_);
-          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          // rclcpp::spin_some(node_);  // removed: MultiThreadedExecutor handles callbacks in background
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         changeFSMExecState(REPLAN_TRAJ, "TRIG");
       }
