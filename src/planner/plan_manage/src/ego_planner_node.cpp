@@ -12,12 +12,14 @@ int main(int argc, char **argv)
   auto node = std::make_shared<rclcpp::Node>("ego_planner_node");
 
   EGOReplanFSM rebo_replan;
+  rebo_replan.init(node);              // ← 先 init，建好所有 subscription/publisher
 
-  rebo_replan.init(node);
+  rclcpp::executors::MultiThreadedExecutor executor(
+      rclcpp::ExecutorOptions(), 4);
+  executor.add_node(node);             // ← 然後才 add_node
 
-  rclcpp::spin(node);
+  executor.spin();
   rclcpp::shutdown();
-
   return 0;
 }
 
