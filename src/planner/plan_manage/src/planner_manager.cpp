@@ -142,6 +142,9 @@ namespace ego_planner
 
         double t;
         double t_cur = (rclcpp::Clock().now() - local_data_.start_time_).seconds();
+        // If the trajectory has already ended (t_cur > duration_), segment_point would stay empty and the loop
+        // below would read segment_point[-1]; a garbage arc length then lets the resampling loop grow without bound.
+        t_cur = std::min(t_cur, local_data_.duration_);
 
         vector<double> pseudo_arc_length;
         vector<Eigen::Vector3d> segment_point;
@@ -189,7 +192,7 @@ namespace ego_planner
           point_set.clear();
           sample_length = 0;
           id = 0;
-          while ((id <= pseudo_arc_length.size() - 2) && sample_length <= pseudo_arc_length.back())
+          while ((id + 1 < pseudo_arc_length.size()) && sample_length <= pseudo_arc_length.back())
           {
             if (sample_length >= pseudo_arc_length[id] && sample_length < pseudo_arc_length[id + 1])
             {
