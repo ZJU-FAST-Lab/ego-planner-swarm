@@ -1,0 +1,40 @@
+Visualization Manager:
+  Global Options:
+    Fixed Frame: world
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+    - Class: rviz_default_plugins/Odometry
+      Name: Global Odometry
+      Enabled: true
+      Keep: 1
+      Topic:
+        Value: /odom_global_001
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Super-LIO Cloud
+      Enabled: true
+      Color Transformer: FlatColor
+      Color: 180; 180; 180
+      Size (m): 0.04
+      Topic:
+        Value: /lio/cloud_world
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Inflated Obstacles
+      Enabled: true
+      Color Transformer: FlatColor
+      Color: 255; 120; 30
+      Size (m): 0.08
+      Topic:
+        Value: /local_obstacles
+    - Class: rviz_default_plugins/Marker
+      Name: Planned Trajectory
+      Enabled: true
+      Topic:
+        Value: /planned_path
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Value: /move_base_simple/goal

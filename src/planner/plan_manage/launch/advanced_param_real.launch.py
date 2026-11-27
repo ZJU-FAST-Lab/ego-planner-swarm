@@ -10,10 +10,11 @@ def generate_launch_description():
     map_size_y = LaunchConfiguration('map_size_y_', default=30.0)
     map_size_z = LaunchConfiguration('map_size_z_', default=5.0)
     
-    odometry_topic = LaunchConfiguration('odometry_topic', default='odom')
-    camera_pose_topic = LaunchConfiguration('camera_pose_topic', default='camera_pose')
-    depth_topic = LaunchConfiguration('depth_topic', default='depth_image')
-    cloud_topic = LaunchConfiguration('cloud_topic', default='cloud')
+    odometry_topic = LaunchConfiguration('odometry_topic', default='/odom_global_001')
+    # 默认用配准点云建图；深度图与相机位姿映射到私有占位话题，避免误接。
+    camera_pose_topic = LaunchConfiguration('camera_pose_topic', default='~/unused/camera_pose')
+    depth_topic = LaunchConfiguration('depth_topic', default='~/unused/depth_image')
+    cloud_topic = LaunchConfiguration('cloud_topic', default='/lio/cloud_world')
     
     cx = LaunchConfiguration('cx', default=321.04638671875)
     cy = LaunchConfiguration('cy', default=243.44969177246094)
@@ -41,7 +42,7 @@ def generate_launch_description():
     point4_y = LaunchConfiguration('point4_y', default=30.0)
     point4_z = LaunchConfiguration('point4_z', default=1.0)
 
-    flight_type = LaunchConfiguration('flight_type', default=2)
+    flight_type = LaunchConfiguration('flight_type', default=1)
     use_distinctive_trajs = LaunchConfiguration('use_distinctive_trajs', default=True)
     
     obj_num_set = LaunchConfiguration('obj_num_set', default=10)
@@ -93,7 +94,7 @@ def generate_launch_description():
         name=['drone_', drone_id, '_ego_planner_node'],
         output='screen',
         remappings=[
-            ('odom_world', ['drone_', drone_id, '_', odometry_topic]),
+            ('odom_world', odometry_topic),
             ('planning/bspline', ['drone_', drone_id, '_planning/bspline']),
             ('planning/data_display', ['drone_', drone_id, '_planning/data_display']),
             ('planning/broadcast_bspline_from_planner', '/broadcast_bspline'),
@@ -105,10 +106,11 @@ def generate_launch_description():
             ('optimal_list', ['drone_', drone_id, '_plan_vis/optimal_list']),
             ('a_star_list', ['drone_', drone_id, '_plan_vis/a_star_list']),
             
-            ('grid_map/odom', ['drone_', drone_id, '_', odometry_topic]),
-            ('grid_map/cloud', ['drone_', drone_id, '_', cloud_topic]),
-            ('grid_map/pose', ['drone_', drone_id, '_', camera_pose_topic]),
-            ('grid_map/depth', ['drone_', drone_id, '_', depth_topic]),
+            # 建图与规划共用同一路里程计；机载传感器话题不拼接无人机编号。
+            ('grid_map/odom', odometry_topic),
+            ('grid_map/cloud', cloud_topic),
+            ('grid_map/pose', camera_pose_topic),
+            ('grid_map/depth', depth_topic),
             ('grid_map/occupancy_inflate', ['drone_', drone_id, '_grid/grid_map/occupancy_inflate'])
         ],
         parameters=[
